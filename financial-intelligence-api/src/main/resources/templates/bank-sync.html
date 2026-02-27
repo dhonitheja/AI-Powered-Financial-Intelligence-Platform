@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Bank Sync Complete</title>
+</head>
+
+<body style="font-family: Arial, sans-serif; background-color: #f8fafc; margin: 0; padding: 20px;">
+    <div
+        style="max-width: 600px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; border-left: 5px solid #3b82f6; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+        <h2 style="color: #2563eb;" th:text="${title}">Bank Sync Competed</h2>
+        <p style="color: #334155;">Your latest transactions have been securely synced and analyzed by AI.</p>
+
+        <div style="background-color: #eff6ff; padding: 15px; border-radius: 6px; margin: 20px 0;">
+            <p><strong>New Transactions Added:</strong> <span th:text="${newTransactionsCount}">0</span></p>
+        </div>
+
+        <p style="font-size: 14px; color: #64748b;">Visit your dashboard to see your updated financial insights.</p>
+    </div>
+</body>
+
+</html>

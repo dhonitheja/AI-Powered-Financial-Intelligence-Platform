@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Budget Threshold Exceeded</title>
+</head>
+
+<body style="font-family: Arial, sans-serif; background-color: #f8fafc; margin: 0; padding: 20px;">
+    <div
+        style="max-width: 600px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; border-left: 5px solid #ef4444; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+        <h2 style="color: #ef4444;" th:text="${title}">Budget Limit Exceeded</h2>
+        <p style="color: #334155;">You have crossed your set budget limit for a specific category.</p>
+
+        <div style="background-color: #fee2e2; padding: 15px; border-radius: 6px; margin: 20px 0;">
+            <p><strong>Category:</strong> <span th:text="${category}">Category Name</span></p>
+            <p><strong>Set Limit:</strong> $<span th:text="${limit}">0.00</span></p>
+            <p><strong>Current Spend:</strong> $<span th:text="${currentSpend}">0.00</span></p>
+        </div>
+
+        <p style="font-size: 14px; color: #64748b;">Consider reducing your spending in this category to stay on track
+            for the month.</p>
+    </div>
+</body>
+
+</html>

@@ -1,0 +1,40 @@
+### General
+target/
+*.log
+*.tmp
+*.class
+*.jar
+*.war
+*.ear
+*.iml
+.idea/
+*.DS_Store
+
+# Maven
+**/target/
+**/pom.xml.tag
+**/pom.xml.releaseBackup
+**/pom.xml.versionsBackup
+**/pom.xml.next
+**/release.properties
+
+# Gradle (if any)
+.gradle/
+build/
+
+# Node / frontend
+node_modules/
+*.local
+npm-debug.log*
+
+# IDEs
+.vscode/
+*.sublime-workspace
+*.sublime-project
+
+# Environment files (sensitive)
+.env
+
+# OS files
+Thumbs.db
+Desktop.ini
