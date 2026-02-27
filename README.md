@@ -24,6 +24,16 @@ A full‑stack, production‑ready platform that integrates with **Plaid** to in
 - **Comprehensive Logging** – Start/end of sync, counts of added/updated/removed rows, cursor updates, and error details (no secret leakage).
 - **Integration Tests** – Full‑sync, idempotency, random‑IV validation, and failure‑rollback scenarios.
 
+## Screenshots
+
+<div align="center">
+  <img src="screenshots/screenshot1.png" width="400" alt="Dashboard" />
+  <img src="screenshots/screenshot2.png" width="400" alt="Transactions" />
+  <img src="screenshots/screenshot3.png" width="400" alt="AI Analysis" />
+  <img src="screenshots/screenshot4.png" width="400" alt="Investments" />
+  <img src="screenshots/screenshot5.png" width="400" alt="Settings" />
+</div>
+
 ## Architecture Overview
 ```text
 +-------------------+      +-------------------+      +-------------------+
