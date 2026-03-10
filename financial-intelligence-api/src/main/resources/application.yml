@@ -68,3 +68,28 @@ logging:
     com.example.financial: DEBUG
     org.springframework.security: DEBUG
 
+# ── AutoPay Hub ──────────────────────────────────────────────────────────────
+autopay:
+  reminder:
+    cron: ${AUTOPAY_REMINDER_CRON:0 0 8 * * ?}
+  plaid-verification:
+    # Cron: nightly at 2 AM — scan execution logs for Plaid verification
+    cron: ${AUTOPAY_VERIFICATION_CRON:0 0 2 * * ?}
+    # Days after execution before flagging as NEEDS_REVIEW if unverified
+    review-threshold-days: 5
+
+# ── Stripe ────────────────────────────────────────────────────────────────────
+stripe:
+  secret-key: ${STRIPE_SECRET_KEY:sk_test_placeholder}
+  publishable-key: ${STRIPE_PUBLISHABLE_KEY:pk_test_placeholder}
+  webhook-secret: ${STRIPE_WEBHOOK_SECRET:whsec_placeholder}
+  off-session: true
+
+# ── Resilience4j (rate limiting) ──────────────────────────────────────────────
+resilience4j:
+  ratelimiter:
+    instances:
+      stripe-write:
+        limit-for-period: 10
+        limit-refresh-period: 60s
+        timeout-duration: 0s

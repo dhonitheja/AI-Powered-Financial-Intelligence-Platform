@@ -15,4 +15,6 @@ public interface AppUserRepository extends JpaRepository<AppUser, String> {
     Boolean existsByUsername(String username);
 
     Boolean existsByEmail(String email);
+
+    Optional<AppUser> findByStripeCustomerId(String stripeCustomerId);
 }

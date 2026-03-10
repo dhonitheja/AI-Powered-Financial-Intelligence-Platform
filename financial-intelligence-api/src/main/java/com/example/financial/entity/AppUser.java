@@ -23,6 +23,20 @@ public class AppUser extends BaseEntity {
     @Column(name = "two_factor_secret")
     private String twoFactorSecret;
 
+    /**
+     * Stripe Customer ID — set once on first SetupIntent, never null after
+     * onboarding.
+     */
+    @Column(name = "stripe_customer_id", length = 255)
+    private String stripeCustomerId;
+
+    /**
+     * Stripe PaymentMethod ID of the user's default card.
+     * Only the PM ID is stored (e.g. "pm_xxx") — NEVER raw card numbers.
+     */
+    @Column(name = "stripe_default_payment_method", length = 255)
+    private String stripeDefaultPaymentMethod;
+
     public AppUser() {
     }
 
@@ -70,5 +84,21 @@ public class AppUser extends BaseEntity {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public String getStripeCustomerId() {
+        return stripeCustomerId;
+    }
+
+    public void setStripeCustomerId(String stripeCustomerId) {
+        this.stripeCustomerId = stripeCustomerId;
+    }
+
+    public String getStripeDefaultPaymentMethod() {
+        return stripeDefaultPaymentMethod;
+    }
+
+    public void setStripeDefaultPaymentMethod(String stripeDefaultPaymentMethod) {
+        this.stripeDefaultPaymentMethod = stripeDefaultPaymentMethod;
     }
 }
