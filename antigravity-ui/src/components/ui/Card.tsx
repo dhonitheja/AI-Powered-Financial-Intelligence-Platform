@@ -25,3 +25,14 @@ export const Card = ({ children, className, title, subtitle }: CardProps) => {
         </div>
     );
 };
+export const CardHeader = ({ className, children }: { className?: string, children: React.ReactNode }) => (
+    <div className={cn("p-6", className)}>{children}</div>
+);
+
+export const CardTitle = ({ className, children }: { className?: string, children: React.ReactNode }) => (
+    <h3 className={cn("text-lg font-semibold text-primary", className)}>{children}</h3>
+);
+
+export const CardContent = ({ className, children }: { className?: string, children: React.ReactNode }) => (
+    <div className={cn("p-6 pt-0", className)}>{children}</div>
+);

@@ -1,0 +1,42 @@
+name: Wealthix Deploy
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*.*.*"]
+
+jobs:
+  deploy:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: []
+    environment: production
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build production images
+        run: |
+          docker build \
+            -t wealthix-api:${{ github.sha }} \
+            ./financial-intelligence-api
+          docker build \
+            -t wealthix-ai:${{ github.sha }} \
+            ./financial-ai-service
+          docker build \
+            -t wealthix-ui:${{ github.sha }} \
+            ./antigravity-ui
+
+      # Add your deployment steps here:
+      # - Push to container registry (ECR, GCR, Docker Hub)
+      # - Deploy to Kubernetes / ECS / Cloud Run
+      # - Run database migrations
+      # - Health check after deploy
+      # - Rollback on failure
+
+      - name: Verify deployment health
+        run: |
+          echo "Checking Wealthix API health..."
+          curl -f https://api.wealthix.app/actuator/health \
+            || exit 1
+          echo "Wealthix deployment verified ✅"

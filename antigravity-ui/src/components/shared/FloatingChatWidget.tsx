@@ -78,8 +78,13 @@ export default function FloatingChatWidget() {
         setIsLoading(true);
 
         try {
-            const res = await chatService.sendMessage(trimmed);
-            const { reply, remainingMessages } = res.data;
+            const res = await chatService.sendMessage({
+                sessionId: "floating-widget",
+                message: trimmed
+            });
+            const data = res.data?.data || res.data;
+            const reply = data.reply;
+            const remainingMessages = data.remainingMessages;
             setRemaining(remainingMessages);
             setRateLimited(false);
 

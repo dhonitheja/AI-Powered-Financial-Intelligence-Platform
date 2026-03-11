@@ -17,6 +17,7 @@ import {
 import { cn } from '@/components/ui/Card';
 import { useAuth } from '@/services/authStore';
 import { authService } from '@/services/api';
+import NotificationBell from '@/components/shared/NotificationBell';
 
 const navItems = [
     { name: 'Assistant', href: '/assistant', icon: BrainCircuit },
@@ -25,7 +26,7 @@ const navItems = [
     { name: 'Analytics', href: '/analytics', icon: BarChart3 },
 ];
 
-const authPages = ['/login', '/register'];
+const authPages = ['/login', '/register', '/forgot-password', '/reset-password'];
 
 export default function Shell({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
@@ -103,10 +104,7 @@ export default function Shell({ children }: { children: React.ReactNode }) {
                     </div>
 
                     <div className="flex items-center gap-4">
-                        <button className="p-2 text-slate-400 hover:text-primary relative hover:bg-slate-50 rounded-full transition-all">
-                            <Bell className="w-5 h-5" />
-                            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-danger rounded-full border-2 border-white shadow-sm" />
-                        </button>
+                        <NotificationBell />
                         <div className="h-8 w-[1px] bg-slate-100 mx-2" />
                         <div className="flex items-center gap-3 pl-2">
                             <div className="text-right hidden sm:block">

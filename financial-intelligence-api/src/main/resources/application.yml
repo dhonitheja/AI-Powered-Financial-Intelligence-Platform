@@ -93,3 +93,61 @@ resilience4j:
         limit-for-period: 10
         limit-refresh-period: 60s
         timeout-duration: 0s
+      ai-chat:
+        limit-for-period: 30
+        limit-refresh-period: 1m
+        timeout-duration: 0s
+      autopay-write:
+        limit-for-period: 30
+        limit-refresh-period: 1m
+        timeout-duration: 0s
+
+# ── Observability (Actuator & Prometheus) ────────────────────────────────────
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: when-authorized
+      probes:
+        enabled: true
+  health:
+    livenessstate:
+      enabled: true
+    readinessstate:
+      enabled: true
+  metrics:
+    tags:
+      application: wealthix-api
+
+info:
+  app:
+    name: Wealthix API
+    version: "@project.version@"
+    description: AI-Powered Financial Intelligence Platform
+
+# ── Performance ──────────────────────────────────────────────────────────────
+  datasource:
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      idle-timeout: 300000
+      connection-timeout: 30000
+      pool-name: WealthixPool
+
+  jpa:
+    open-in-view: false
+    properties:
+      hibernate:
+        jdbc:
+          batch_size: 20
+        order_inserts: true
+        order_updates: true
+        generate_statistics: false
+
+  cache:
+    type: caffeine
+    caffeine:
+      spec: maximumSize=500,expireAfterWrite=5m

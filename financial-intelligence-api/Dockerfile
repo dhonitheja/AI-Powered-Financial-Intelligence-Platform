@@ -1,14 +1,25 @@
-# Build stage
-FROM maven:3.8.5-eclipse-temurin-17 AS build
-WORKDIR /app
-COPY pom.xml .
-RUN mvn dependency:go-offline -B
-COPY src ./src
-RUN mvn package -DskipTests
+FROM eclipse-temurin:17-jre-alpine AS runtime
 
-# Run stage
-FROM eclipse-temurin:17-jre
+# CRITICAL: Run as non-root user
+RUN addgroup -S wealthix && adduser -S wealthix -G wealthix
+
 WORKDIR /app
-COPY --from=build /app/target/*.jar app.jar
+
+COPY target/financial-intelligence-api-*.jar app.jar
+
+# Set correct ownership
+RUN chown wealthix:wealthix app.jar
+
+USER wealthix
+
 EXPOSE 8080
-ENTRYPOINT ["java", "-jar", "app.jar"]
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s \
+    --retries=3 \
+    CMD wget -qO- http://localhost:8080/actuator/health || exit 1
+
+ENTRYPOINT ["java", \
+    "-XX:+UseContainerSupport", \
+    "-XX:MaxRAMPercentage=75.0", \
+    "-Djava.security.egd=file:/dev/./urandom", \
+    "-jar", "app.jar"]

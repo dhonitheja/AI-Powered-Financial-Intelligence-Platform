@@ -69,8 +69,7 @@ public class WebSecurityConfig {
                         .requestMatchers("/api/webhooks/**").permitAll()
                         .requestMatchers("/api-docs/**", "/swagger-ui.html", "/swagger-ui/**").permitAll()
                         .requestMatchers("/", "/api", "/health", "/favicon.ico", "/error", "/static/**", "/css/**",
-                                "/js/**", "/images/**")
-                        .permitAll()
+                                "/js/**", "/images/**", "/ws/**").permitAll()
                         .requestMatchers("/api/plaid/**").authenticated()
                         .anyRequest().authenticated());
 

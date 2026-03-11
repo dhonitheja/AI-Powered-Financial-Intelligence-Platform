@@ -26,6 +26,30 @@ public class DatabaseMigrationRunner implements ApplicationRunner {
         @Override
         public void run(ApplicationArguments args) {
                 log.info("Running startup database migrations...");
+                // Retry up to 3 times with a 5-second delay to handle Supabase cold starts
+                int maxRetries = 3;
+                for (int attempt = 1; attempt <= maxRetries; attempt++) {
+                        try {
+                                runMigrations();
+                                return; // success
+                        } catch (Exception e) {
+                                log.warn("Migration attempt {}/{} failed: {}", attempt, maxRetries, e.getMessage());
+                                if (attempt < maxRetries) {
+                                        try {
+                                                Thread.sleep(5000);
+                                        } catch (InterruptedException ie) {
+                                                Thread.currentThread().interrupt();
+                                                break;
+                                        }
+                                } else {
+                                        log.error("All migration attempts failed (non-fatal): {}", e.getMessage());
+                                }
+                        }
+                }
+                log.info("Database migration check complete.");
+        }
+
+        private void runMigrations() {
                 try {
                         jdbcTemplate.execute(
                                         "ALTER TABLE users ADD COLUMN IF NOT EXISTS two_factor_enabled BOOLEAN NOT NULL DEFAULT FALSE");
@@ -34,6 +58,15 @@ public class DatabaseMigrationRunner implements ApplicationRunner {
                         jdbcTemplate.execute(
                                         "ALTER TABLE users ADD COLUMN IF NOT EXISTS two_factor_secret VARCHAR(255)");
                         log.info("✔ Column 'two_factor_secret' ensured.");
+
+                        // ── Stripe integration columns ─────────────────────────────────────
+                        jdbcTemplate.execute(
+                                        "ALTER TABLE users ADD COLUMN IF NOT EXISTS stripe_customer_id VARCHAR(255)");
+                        jdbcTemplate.execute(
+                                        "ALTER TABLE users ADD COLUMN IF NOT EXISTS stripe_default_payment_method VARCHAR(255)");
+                        jdbcTemplate.execute(
+                                        "CREATE INDEX IF NOT EXISTS idx_users_stripe_customer ON users(stripe_customer_id)");
+                        log.info("✔ Stripe columns ensured.");
 
                         // ── Financial account enrichment columns ───────────────────────────
                         jdbcTemplate.execute(
@@ -202,9 +235,96 @@ public class DatabaseMigrationRunner implements ApplicationRunner {
                                         "CREATE INDEX IF NOT EXISTS idx_reminders_reminder_date ON autopay_reminders(reminder_date, is_sent)");
                         log.info("✔ autopay_reminders table ensured.");
 
+                        // ── notifications ──────────────────────────────────────────────────
+                        jdbcTemplate.execute(
+                                        "CREATE TABLE IF NOT EXISTS notifications (" +
+                                                        "  id UUID PRIMARY KEY DEFAULT gen_random_uuid()," +
+                                                        "  user_id UUID NOT NULL REFERENCES users(id)," +
+                                                        "  type VARCHAR(50) NOT NULL," +
+                                                        "  title VARCHAR(255) NOT NULL," +
+                                                        "  message TEXT NOT NULL," +
+                                                        "  is_read BOOLEAN DEFAULT false," +
+                                                        "  action_url VARCHAR(500)," +
+                                                        "  created_at TIMESTAMPTZ NOT NULL DEFAULT now()," +
+                                                        "  read_at TIMESTAMPTZ" +
+                                                        ")");
+                        jdbcTemplate.execute(
+                                        "CREATE INDEX IF NOT EXISTS idx_notifications_user_unread " +
+                                                        "ON notifications(user_id, is_read, created_at DESC) " +
+                                                        "WHERE is_read = false");
+                        jdbcTemplate.execute(
+                                        "CREATE INDEX IF NOT EXISTS idx_notifications_user_created " +
+                                                        "ON notifications(user_id, created_at DESC)");
+                        log.info("✔ notifications table ensured.");
+
+                        // ── users (onboarding) ─────────────────────────────────────────────
+                        jdbcTemplate.execute(
+                                        "ALTER TABLE users ADD COLUMN IF NOT EXISTS onboarding_completed BOOLEAN DEFAULT false");
+                        log.info("✔ Onboarding columns ensured.");
+
+                        // ── password reset tokens ────────────────────────────────────────
+                        jdbcTemplate.execute(
+                                        "CREATE TABLE IF NOT EXISTS password_reset_tokens (" +
+                                        "  id UUID PRIMARY KEY DEFAULT gen_random_uuid()," +
+                                        "  token VARCHAR(255) NOT NULL UNIQUE," +
+                                        "  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE," +
+                                        "  expiry_date TIMESTAMPTZ NOT NULL," +
+                                        "  created_at TIMESTAMPTZ NOT NULL DEFAULT now()," +
+                                        "  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()" +
+                                        ")");
+                        jdbcTemplate.execute(
+                                        "CREATE INDEX IF NOT EXISTS idx_password_reset_token ON password_reset_tokens(token)");
+                        log.info("✔ Password reset tokens table ensured.");
+
+                        // ── AI tables ──────────────────────────────────────────────
+                        jdbcTemplate.execute(
+                                        "CREATE TABLE IF NOT EXISTS chat_history (" +
+                                        "  id UUID PRIMARY KEY DEFAULT gen_random_uuid()," +
+                                        "  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE," +
+                                        "  role VARCHAR(20) NOT NULL," +
+                                        "  content TEXT NOT NULL," +
+                                        "  session_id UUID NOT NULL," +
+                                        "  created_at TIMESTAMPTZ NOT NULL DEFAULT now()" +
+                                        ")");
+                        jdbcTemplate.execute(
+                                        "CREATE INDEX IF NOT EXISTS idx_chat_history_user_session ON chat_history(user_id, session_id, created_at)");
+                        log.info("✔ Chat history table ensured.");
+
+                        jdbcTemplate.execute(
+                                        "CREATE TABLE IF NOT EXISTS savings_goals (" +
+                                        "  id UUID PRIMARY KEY DEFAULT gen_random_uuid()," +
+                                        "  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE," +
+                                        "  goal_name VARCHAR(255) NOT NULL," +
+                                        "  target_amount DECIMAL(15,2) NOT NULL CHECK (target_amount > 0)," +
+                                        "  current_amount DECIMAL(15,2) NOT NULL DEFAULT 0," +
+                                        "  currency VARCHAR(3) DEFAULT 'USD'," +
+                                        "  target_date DATE," +
+                                        "  is_active BOOLEAN DEFAULT true," +
+                                        "  created_at TIMESTAMPTZ NOT NULL DEFAULT now()," +
+                                        "  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()" +
+                                        ")");
+                        jdbcTemplate.execute(
+                                        "CREATE INDEX IF NOT EXISTS idx_savings_goals_user ON savings_goals(user_id, is_active)");
+                        log.info("✔ Savings goals table ensured.");
+
+                        jdbcTemplate.execute(
+                                        "CREATE TABLE IF NOT EXISTS spending_anomalies (" +
+                                        "  id UUID PRIMARY KEY DEFAULT gen_random_uuid()," +
+                                        "  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE," +
+                                        "  schedule_id UUID REFERENCES autopay_schedules(id) ON DELETE CASCADE," +
+                                        "  anomaly_type VARCHAR(100) NOT NULL," +
+                                        "  description VARCHAR(500) NOT NULL," +
+                                        "  detected_at TIMESTAMPTZ NOT NULL DEFAULT now()," +
+                                        "  is_acknowledged BOOLEAN DEFAULT false," +
+                                        "  acknowledged_at TIMESTAMPTZ" +
+                                        ")");
+                        jdbcTemplate.execute(
+                                        "CREATE INDEX IF NOT EXISTS idx_anomalies_user_unread ON spending_anomalies(user_id, is_acknowledged) WHERE is_acknowledged = false");
+                        log.info("✔ Spending anomalies table ensured.");
+
                 } catch (Exception e) {
                         log.error("Migration failed (non-fatal): {}", e.getMessage());
+                        throw new RuntimeException("Migration failed: " + e.getMessage(), e);
                 }
-                log.info("Database migration check complete.");
         }
 }

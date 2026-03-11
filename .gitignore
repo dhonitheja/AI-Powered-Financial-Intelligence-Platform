@@ -26,15 +26,35 @@ build/
 node_modules/
 *.local
 npm-debug.log*
+.next/
 
 # IDEs
 .vscode/
 *.sublime-workspace
 *.sublime-project
 
-# Environment files (sensitive)
+# Environment files — NEVER commit
 .env
+.env.local
+.env.production
+.env.*.local
+
+# Secrets
+*.pem
+*.key
+*.p12
 
 # OS files
 Thumbs.db
 Desktop.ini
+
+# Python
+venv/
+__pycache__/
+*.pyc
+
+# Scratch files
+/*.txt
+/*.json
+financial-intelligence-api/*.txt
+financial-intelligence-api/*.log

@@ -13,9 +13,15 @@ import com.example.financial.security.LoginRateLimiterService;
 import com.example.financial.security.TotpAttemptService;
 import com.example.financial.security.TwoFactorAuthService;
 import com.example.financial.security.UserDetailsImpl;
+import com.example.financial.dto.ForgotPasswordRequest;
+import com.example.financial.dto.ResetPasswordRequest;
+import com.example.financial.entity.PasswordResetToken;
+import com.example.financial.repository.PasswordResetTokenRepository;
+import com.example.financial.service.EmailService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
@@ -44,6 +50,11 @@ public class AuthController {
     private final TwoFactorAuthService tfaService;
     private final LoginRateLimiterService loginRateLimiter;
     private final TotpAttemptService totpAttemptService;
+    private final PasswordResetTokenRepository passwordResetTokenRepository;
+    private final EmailService emailService;
+
+    @Value("${FRONTEND_URL:http://localhost:3000}")
+    private String frontendUrl;
 
     public AuthController(
             AuthenticationManager authenticationManager,
@@ -52,7 +63,9 @@ public class AuthController {
             JwtUtils jwtUtils,
             TwoFactorAuthService tfaService,
             LoginRateLimiterService loginRateLimiter,
-            TotpAttemptService totpAttemptService) {
+            TotpAttemptService totpAttemptService,
+            PasswordResetTokenRepository passwordResetTokenRepository,
+            EmailService emailService) {
         this.authenticationManager = authenticationManager;
         this.userRepository = userRepository;
         this.encoder = encoder;
@@ -60,6 +73,8 @@ public class AuthController {
         this.tfaService = tfaService;
         this.loginRateLimiter = loginRateLimiter;
         this.totpAttemptService = totpAttemptService;
+        this.passwordResetTokenRepository = passwordResetTokenRepository;
+        this.emailService = emailService;
     }
 
     // ─── Login ─────────────────────────────────────────────────────────────────
@@ -94,7 +109,7 @@ public class AuthController {
             SecurityContextHolder.getContext().setAuthentication(authentication);
             UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
 
-            AppUser user = userRepository.findByEmailIgnoreCase(loginRequest.getEmail())
+            AppUser user = userRepository.findFirstByEmailIgnoreCase(loginRequest.getEmail())
                     .orElseThrow(() -> new UsernameNotFoundException("User Not Found"));
 
             // ── Success: reset rate limiter ───────────────────────────────────
@@ -145,11 +160,11 @@ public class AuthController {
 
     @PostMapping("/signup")
     public ResponseEntity<?> registerUser(@RequestBody SignupRequest signUpRequest) {
-        if (userRepository.existsByUsername(signUpRequest.getUsername())) {
+        if (userRepository.existsByUsernameIgnoreCase(signUpRequest.getUsername())) {
             return ResponseEntity.badRequest()
                     .body(new MessageResponse("Error: Username is already taken!"));
         }
-        if (userRepository.existsByEmail(signUpRequest.getEmail())) {
+        if (userRepository.existsByEmailIgnoreCase(signUpRequest.getEmail())) {
             return ResponseEntity.badRequest()
                     .body(new MessageResponse("Error: Email is already in use!"));
         }
@@ -162,6 +177,63 @@ public class AuthController {
 
         return ResponseEntity.ok(new MessageResponse("User registered successfully!"));
     }
+
+    // ─── Forgot/Reset Password ─────────────────────────────────────────────────
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<?> forgotPassword(@RequestBody ForgotPasswordRequest request) {
+        if (request.getEmail() == null || request.getEmail().isBlank()) {
+            return ResponseEntity.badRequest().body(new MessageResponse("Email is required"));
+        }
+
+        AppUser user = userRepository.findFirstByEmailIgnoreCase(request.getEmail()).orElse(null);
+        if (user == null) {
+            // Return success even if not found to prevent email enumeration
+            return ResponseEntity.ok(new MessageResponse("If your email is registered, you will receive a reset link shortly."));
+        }
+
+        // Generate token and save
+        String tokenStr = java.util.UUID.randomUUID().toString();
+        
+        // Remove old tokens
+        passwordResetTokenRepository.findByUser(user).ifPresent(passwordResetTokenRepository::delete);
+        
+        PasswordResetToken resetToken = new PasswordResetToken(tokenStr, user);
+        passwordResetTokenRepository.save(resetToken);
+
+        // Send email
+        String resetLink = frontendUrl + "/reset-password?token=" + tokenStr;
+        String content = "Hello " + user.getUsername() + ",\n\n"
+                + "You requested to reset your password. Please click the link below to set a new password:\n"
+                + resetLink + "\n\n"
+                + "This link will expire in 24 hours.\n\n"
+                + "If you did not request this, please ignore this email.";
+
+        emailService.sendPlainTextEmail(user.getEmail(), "Password Reset Request", content);
+
+        return ResponseEntity.ok(new MessageResponse("If your email is registered, you will receive a reset link shortly."));
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(@RequestBody ResetPasswordRequest request) {
+        if (request.getToken() == null || request.getNewPassword() == null) {
+            return ResponseEntity.badRequest().body(new MessageResponse("Token and new password required"));
+        }
+
+        PasswordResetToken resetToken = passwordResetTokenRepository.findByToken(request.getToken()).orElse(null);
+        if (resetToken == null || resetToken.getExpiryDate().isBefore(java.time.LocalDateTime.now())) {
+            return ResponseEntity.badRequest().body(new MessageResponse("Invalid or expired reset token"));
+        }
+
+        AppUser user = resetToken.getUser();
+        user.setPassword(encoder.encode(request.getNewPassword()));
+        userRepository.save(user);
+
+        passwordResetTokenRepository.delete(resetToken);
+
+        return ResponseEntity.ok(new MessageResponse("Password has been reset successfully. You can now log in."));
+    }
+
 
     // ─── Logout ────────────────────────────────────────────────────────────────
 
@@ -188,7 +260,7 @@ public class AuthController {
             }
 
             UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
-            AppUser user = userRepository.findByEmailIgnoreCase(userDetails.getEmail()).orElse(null);
+            AppUser user = userRepository.findFirstByEmailIgnoreCase(userDetails.getEmail()).orElse(null);
 
             if (user == null) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -218,7 +290,7 @@ public class AuthController {
                         .body(new MessageResponse("Not authenticated"));
             }
 
-            AppUser user = userRepository.findByEmailIgnoreCase(userDetails.getEmail())
+            AppUser user = userRepository.findFirstByEmailIgnoreCase(userDetails.getEmail())
                     .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
             String secret = tfaService.generateNewSecret();
@@ -247,7 +319,7 @@ public class AuthController {
                         .body(new MessageResponse("Not authenticated"));
             }
 
-            AppUser user = userRepository.findByEmailIgnoreCase(userDetails.getEmail())
+            AppUser user = userRepository.findFirstByEmailIgnoreCase(userDetails.getEmail())
                     .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
             boolean enable = Boolean.TRUE.equals(request.get("enable"));
@@ -296,7 +368,7 @@ public class AuthController {
                             "Too many failed verification attempts. Please wait 5 minutes."));
         }
 
-        AppUser user = userRepository.findByEmailIgnoreCase(email).orElse(null);
+        AppUser user = userRepository.findFirstByEmailIgnoreCase(email).orElse(null);
 
         if (user == null || user.getTwoFactorSecret() == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)

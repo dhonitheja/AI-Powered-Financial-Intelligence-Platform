@@ -12,8 +12,9 @@ import {
     Brain, ShieldAlert, TrendingDown, Wallet,
     ArrowUpRight, ArrowDownRight, RefreshCw, Loader2, CalendarDays
 } from 'lucide-react';
-import AIDrawer from '@/components/shared/AIDrawer';
 import AddTransactionModal from '@/components/shared/AddTransactionModal';
+import AIDrawer from '@/components/shared/AIDrawer';
+import { GamificationCard } from '@/components/dashboard/GamificationCard';
 import { transactionService, plaidService } from '@/services/api';
 import { cn } from '@/components/ui/Card';
 
@@ -178,6 +179,8 @@ export default function Dashboard() {
                     </button>
                 </div>
             </div>
+            
+            <GamificationCard />
 
             {/* ── Stat Cards ──────────────────────────────────────────────── */}
             {loading ? (

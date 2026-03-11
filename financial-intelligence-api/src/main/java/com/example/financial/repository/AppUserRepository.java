@@ -10,11 +10,11 @@ import java.util.Optional;
 public interface AppUserRepository extends JpaRepository<AppUser, String> {
     Optional<AppUser> findByUsername(String username);
 
-    Optional<AppUser> findByEmailIgnoreCase(String email);
+    Optional<AppUser> findFirstByEmailIgnoreCase(String email);
 
-    Boolean existsByUsername(String username);
+    Boolean existsByUsernameIgnoreCase(String username);
 
-    Boolean existsByEmail(String email);
+    Boolean existsByEmailIgnoreCase(String email);
 
     Optional<AppUser> findByStripeCustomerId(String stripeCustomerId);
 }

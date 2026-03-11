@@ -5,6 +5,7 @@ import com.example.financial.autopay.model.entity.PlaidVerificationStatus;
 import com.example.financial.autopay.repository.AutoPayExecutionLogRepository;
 import com.example.financial.autopay.repository.AutoPayScheduleRepository;
 import com.example.financial.repository.AppUserRepository;
+import com.example.financial.notification.service.NotificationService;
 import com.stripe.exception.SignatureVerificationException;
 import com.stripe.model.Event;
 import com.stripe.model.EventDataObjectDeserializer;
@@ -55,14 +56,17 @@ public class StripeWebhookController {
     private final AutoPayExecutionLogRepository executionLogRepository;
     private final AutoPayScheduleRepository scheduleRepository;
     private final AppUserRepository userRepository;
+    private final NotificationService notificationService;
 
     public StripeWebhookController(
             AutoPayExecutionLogRepository executionLogRepository,
             AutoPayScheduleRepository scheduleRepository,
-            AppUserRepository userRepository) {
+            AppUserRepository userRepository,
+            NotificationService notificationService) {
         this.executionLogRepository = executionLogRepository;
         this.scheduleRepository = scheduleRepository;
         this.userRepository = userRepository;
+        this.notificationService = notificationService;
     }
 
     /**
@@ -145,6 +149,13 @@ public class StripeWebhookController {
             execLog.setPlaidVerificationStatus(PlaidVerificationStatus.UNVERIFIED);
             executionLogRepository.save(execLog);
             log.info("[StripeWebhook] PI {} marked SUCCESS — pending Plaid verification", piId);
+
+            // Notify user — generic message only, no amounts or account numbers
+            if (execLog.getSchedule() != null) {
+                notificationService.notifyPaymentSuccess(
+                        execLog.getUser().getId(),
+                        execLog.getSchedule().getPaymentName());
+            }
         });
     }
 
@@ -177,6 +188,14 @@ public class StripeWebhookController {
 
             executionLogRepository.save(execLog);
             log.warn("[StripeWebhook] PI {} FAILED: code={}", piId, declineCode);
+
+            // Notify user — user-friendly message, no raw Stripe data
+            if (execLog.getSchedule() != null) {
+                notificationService.notifyPaymentFailed(
+                        execLog.getUser().getId(),
+                        execLog.getSchedule().getPaymentName(),
+                        userMessage);
+            }
         });
     }
 

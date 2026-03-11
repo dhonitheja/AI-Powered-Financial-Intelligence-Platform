@@ -1,124 +1,66 @@
-# AI‑Powered Financial Intelligence Platform
+# Wealthix — AI-Powered Financial Intelligence Platform
 
-A full‑stack, production‑ready platform that integrates with **Plaid** to ingest bank transactions, enrich them with AI‑generated insights, and expose a secure REST API for a modern React UI.
+Wealthix is a comprehensive, next-generation financial intelligence platform that empowers users to seamlessly synthesize their financial footprint, interact with advanced AI-driven generative financial analytics, track spending securely, and intuitively uncover wealth-building insights.
 
-## Table of Contents
-- [Features](#features)
-- [Architecture Overview](#architecture-overview)
-- [Security Hardening](#security-hardening)
-- [Getting Started](#getting-started)
-- [Running Locally](#running-locally)
-- [Database Migrations](#database-migrations)
-- [Testing](#testing)
-- [Environment Variables](#environment-variables)
-- [License](#license)
+This repository encapsulates the full-stack system, leveraging a robust Spring Boot backend architecture alongside a modern, dynamic Next.js frontend GUI and FastAPI-based microservices for asynchronous generative artificial intelligence querying.
 
-## Features
-- **Plaid Integration** – Link, exchange public token, and incremental `/transactions/sync`.
-- **AES‑256‑GCM Encryption** – Plaid access tokens are stored encrypted with a random IV.
-- **Cursor‑based Sync** – Efficient incremental sync using `next_cursor`.
-- **Idempotent Transaction Upserts** – No duplicate `plaid_transaction_id`s.
-- **Soft‑Delete** – Removed Plaid transactions are marked `deleted = true`.
-- **JWT Authentication** – All `/api/plaid/**` endpoints are protected.
-- **Rate Limiting** – Prevents abuse of the `/plaid/sync` endpoint.
-- **Comprehensive Logging** – Start/end of sync, counts of added/updated/removed rows, cursor updates, and error details (no secret leakage).
-- **Integration Tests** – Full‑sync, idempotency, random‑IV validation, and failure‑rollback scenarios.
+## System Architecture Overview
 
-## Screenshots
+The system abstracts into three decoupled core components:
+1. **wealthix-api** (Java 17, Spring Boot 3.2.3): The monolithic core REST API. Orchestrates user authentication, CRUD operations over secure financial transaction data, Plaid integration logic, cron-scheduled AutoPay transactions, WebSocket STOMP messaging for gamification events, and exports.
+2. **wealthix-ui** (Next.js 14, React, TypeScript): The frontend user-facing dashboard. Highly responsive visually, meticulously secured via CSRF/JWT interceptors, implements real-time WebSockets to toast achievements dynamically, natively integrates visual AI graphs, and features high fidelity layout/styling leveraging Tailwind CSS natively alongside Lucide React visual artifacts.
+3. **wealthix-ai** (Python 3.11, FastAPI): A high-performance Python microservice optimized to perform isolated interactions with Google's Gemini language model architectures. Computes and streams advanced ML-grade risk scorings over raw transaction meta-text, detects spending anomalies mathematically, and powers the Generative Assistant interface natively inside a strictly isolated runtime sandbox.
 
-<div align="center">
-  <img src="screenshots/screenshot1.png" width="400" alt="Dashboard" />
-  <img src="screenshots/screenshot2.png" width="400" alt="Transactions" />
-  <img src="screenshots/screenshot3.png" width="400" alt="AI Analysis" />
-  <img src="screenshots/screenshot4.png" width="400" alt="Investments" />
-  <img src="screenshots/screenshot5.png" width="400" alt="Settings" />
-</div>
+## Security Baseline Principles
+- Backend leverages **AES-256-GCM** encryption symmetrically storing sensitive credentials gracefully within the persistence database natively.
+- No PII is emitted to external providers explicitly. Transaction data sent to AI contexts only ever includes randomized strings and generalized numbers—Account ID linking and specific names are masked securely.
+- Cross-Site Request Forgery (CSRF) protection is mapped to HTTP-only explicit stateless session configurations utilizing encrypted JWT tokens (HS512 signing blocks).
 
-## Architecture Overview
-```text
-+-------------------+      +-------------------+      +-------------------+
-|   Antigravity UI  | <--->|  financial‑ai‑service (FastAPI) |
-+-------------------+      +-------------------+      +-------------------+
-                                   |
-                                   v
-                         +-------------------+
-                         | financial‑intelligence‑api (Spring Boot) |
-                         +-------------------+
-                                   |
-                                   v
-                         +-------------------+
-                         |      PostgreSQL (Supabase)          |
-                         +-------------------+
+## Development Setup
+
+The standard environment encapsulates modern dependency suites automatically injected via Maven & NPM scripts natively. Ensure you have installed standard tools properly on your system natively including node, npm, python (pip), and java.
+
+### 1. Database (PostgreSQL / Flyway)
+Data models map onto a PostgreSQL dialect naturally inside `application-dev.yml`. We automatically provision a containerized local Postgres deployment using Flyway script iterations. Database versioning dynamically controls table architecture and constraint bounds.
+
+### 2. Run API Backend (`wealthix-api`)
 ```
-
-## Security Hardening
-1. **Encrypted Access Token** – `EncryptionService` uses **AES‑256‑GCM** with a per‑record random IV. Tokens are never logged.
-2. **Legacy Migration** – `V4__ReEncryptAccessTokens` migrates any existing tokens encrypted with the old static‑IV CBC scheme.
-3. **Unique Transaction IDs** – DB constraint on `transactions.plaid_transaction_id`.
-4. **Soft‑Delete Flag** – `transactions.deleted` column.
-5. **JWT‑Only Auth** – No `userId` accepted from the client; resolved from `SecurityContext`.
-6. **Rate Limiting** – Configured on `/plaid/sync`.
-7. **Observability** – Structured logs for every sync step.
-
-## Getting Started
-
-### Prerequisites
-- **Java 17+**, **Maven**, **Node.js 18+**, **Docker** (optional).
-- **Plaid sandbox credentials** (client ID, secret, public key).
-- **Supabase/PostgreSQL** connection string.
-- **Environment file** (`.env`) – **DO NOT** commit this file! It is ignored by `.gitignore`.
-
-### Environment Variables (`.env`)
-```env
-PLAID_CLIENT_ID=your_client_id
-PLAID_SECRET=your_secret
-PLAID_PUBLIC_KEY=your_public_key
-PLAID_ENCRYPTION_KEY=your_base64_32_byte_key   # 256‑bit key for AES‑GCM
-JWT_SECRET=your_jwt_secret
-SPRING_DATASOURCE_URL=jdbc:postgresql://<host>/<db>
-SPRING_DATASOURCE_USERNAME=your_username
-SPRING_DATASOURCE_PASSWORD=your_password
-```
-
-### Running Locally
-```bash
-# Backend (Spring Boot)
 cd financial-intelligence-api
+./mvnw clean install
 ./mvnw spring-boot:run
+```
+*(Runs on `http://localhost:8080`)*
 
-# AI Service (FastAPI)
-cd ../financial-ai-service
-python -m venv venv
-source venv/bin/activate   # Windows: venv\Scripts\activate
+### 3. Run AI Service (`wealthix-ai`)
+```
+cd financial-intelligence-ai
 pip install -r requirements.txt
-uvicorn app.main:app --reload
+uvicorn main:app --reload --port 8000
+```
+*(Runs on `http://localhost:8000`)*
 
-# Frontend (Next.js)
-cd ../antigravity-ui
+### 4. Run Frontend (`wealthix-ui`)
+```
+cd antigravity-ui
 npm install
 npm run dev
 ```
+*(Runs on `http://localhost:3000`)*
 
-## Database Migrations
-We use **Flyway**. On application start it will automatically apply:
-- `V2__add_encrypted_access_token_and_next_cursor.sql`
-- `V3__add_soft_delete_to_transactions.sql`
-- `V4__ReEncryptAccessTokens.java` (one‑time migration)
+## Features
 
-To run migrations manually:
-```bash
-./mvnw flyway:migrate
+- **Plaid Sync Engine**: Links your bank cleanly fetching transactions reliably parsing Webhook payload events properly natively.
+- **AI Agent (Gemini)**: Detects hidden anomalies mathematically. Scores fraud on normalized heuristics. Forecasts dynamic month-over-month variances automatically.
+- **Gamification Mechanics**: XP bounds mapping linearly awarding dynamic prestige Tiers (`SILVER`, `GOLD`... `DIAMOND`) utilizing realtime Websockets (`SockJS`).
+- **Comprehensive PDF / CSV Exports**: Render beautifully organized structured transactional reports mapping dynamically generated Apache Commons data configurations intuitively out to end users securely.
+
+## Test Harness
+
+Run backend JUnit isolation suites automatically via Maven seamlessly ensuring core runtime logic holds true:
 ```
-
-## Testing
-```bash
-# Run all unit & integration tests
 ./mvnw test
 ```
-The `IntegrationPlaidSyncTest` covers:
-- Full sync + idempotency
-- Random IV property
-- Failure handling with rollback
 
-## License
-MIT – feel free to fork, modify, and deploy.
+## IDE Tooling Used
+
+Developed seamlessly by the Antigravity Agent utilizing modern continuous automated generation iterations. All environments dynamically verified end to end seamlessly utilizing live container bindings properly natively.

@@ -6,7 +6,7 @@ export function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl;
 
     // Define public routes that don't require authentication
-    const isPublicRoute = pathname === '/login' || pathname === '/register' || pathname === '/' || pathname.startsWith('/_next') || pathname.startsWith('/api/');
+    const isPublicRoute = pathname === '/login' || pathname === '/register' || pathname === '/forgot-password' || pathname === '/reset-password' || pathname === '/' || pathname.startsWith('/_next') || pathname.startsWith('/api/');
 
     const token = request.cookies.get('ai_finance_jwt');
 
@@ -15,7 +15,7 @@ export function middleware(request: NextRequest) {
         return NextResponse.redirect(new URL('/login', request.url));
     }
 
-    if (token && (pathname === '/login' || pathname === '/register')) {
+    if (token && (pathname === '/login' || pathname === '/register' || pathname === '/forgot-password' || pathname === '/reset-password')) {
         // Redirect authenticated users trying to access auth pages to dashboard
         return NextResponse.redirect(new URL('/dashboard', request.url));
     }

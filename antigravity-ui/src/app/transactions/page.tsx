@@ -5,10 +5,10 @@ import { useRouter } from 'next/navigation';
 import { Card } from '@/components/ui/Card';
 import {
     Search, Plus, CalendarDays, ArrowDownRight, ArrowUpRight,
-    CheckCircle2, Clock, AlertCircle, Brain, RefreshCw, CreditCard, Building2
+    CheckCircle2, Clock, AlertCircle, Brain, RefreshCw, CreditCard, Building2, Download
 } from 'lucide-react';
 import { cn } from '@/components/ui/Card';
-import { transactionService } from '@/services/api';
+import { transactionService, exportService } from '@/services/api';
 import AddTransactionModal from '@/components/shared/AddTransactionModal';
 import AIDrawer from '@/components/shared/AIDrawer';
 
@@ -73,6 +73,25 @@ export default function TransactionsPage() {
         } catch (_) { }
     };
 
+    const handleExport = async (format: 'csv' | 'pdf') => {
+        try {
+            const periodParam = period === 'all' ? undefined : period;
+            const res = format === 'csv' 
+                ? await exportService.exportCsv(periodParam) 
+                : await exportService.exportPdf(periodParam);
+            
+            const url = window.URL.createObjectURL(new Blob([res.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `transactions_export.${format}`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+        } catch (error) {
+            console.error('Failed to export', error);
+        }
+    };
+
     // ── Derived: unique categories from DB-filtered result ────────────────────
     const categories = ['all', ...Array.from(new Set(transactions.map(tx => tx.category).filter(Boolean)))];
 
@@ -117,14 +136,28 @@ export default function TransactionsPage() {
                         AI-enriched records — {activeFilterLabel}
                     </p>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex flex-wrap items-center gap-3">
                     <button
                         onClick={() => fetchData(period, accountType)}
-                        className="p-2.5 bg-white border border-slate-200 rounded-xl text-slate-500 hover:bg-slate-50 transition-all"
+                        className="p-2.5 bg-white border border-slate-200 rounded-xl text-slate-500 hover:bg-slate-50 transition-all shadow-sm"
                         title="Refresh"
                     >
                         <RefreshCw className={cn("w-4 h-4", loading && "animate-spin")} />
                     </button>
+                    <div className="flex bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+                        <button
+                            onClick={() => handleExport('csv')}
+                            className="px-4 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-50 hover:text-primary transition-all border-r border-slate-100 flex items-center gap-2"
+                        >
+                            <Download className="w-3.5 h-3.5" /> CSV
+                        </button>
+                        <button
+                            onClick={() => handleExport('pdf')}
+                            className="px-4 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-50 hover:text-rose-600 transition-all flex items-center gap-2"
+                        >
+                            <Download className="w-3.5 h-3.5" /> PDF
+                        </button>
+                    </div>
                     <button
                         onClick={() => setIsModalOpen(true)}
                         className="flex items-center gap-2 bg-primary text-white px-5 py-2.5 rounded-xl font-bold hover:scale-[1.02] transition-all shadow-lg shadow-slate-900/10"

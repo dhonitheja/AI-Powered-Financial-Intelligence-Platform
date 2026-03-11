@@ -2,7 +2,7 @@ import axios from 'axios';
 import { useAuth } from './authStore';
 
 const api = axios.create({
-    baseURL: '/api',
+    baseURL: '/api', // Mapped via Next.js rewrites to localhost:8080
     headers: {
         'Content-Type': 'application/json',
     },
@@ -61,6 +61,12 @@ export const authService = {
     /** Register a new account. */
     register: (data: any) => api.post('/auth/signup', data),
 
+    /** Request a password reset. */
+    forgotPassword: (data: { email: string }) => api.post('/auth/forgot-password', data),
+
+    /** Reset password using the token sent to email. */
+    resetPassword: (data: { token: string; newPassword: string }) => api.post('/auth/reset-password', data),
+
     /** Clear the JWT cookie on the backend. */
     logout: () => api.post('/auth/logout'),
 
@@ -115,15 +121,32 @@ export const plaidService = {
     getSyncStatus: () => api.get('/plaid/sync-status'),
 };
 
-// ─── AI Chat Service ──────────────────────────────────────────────────────────
+// ─── AI Chat & Analytics Service ──────────────────────────────────────────────
 export const chatService = {
     /**
      * Sends a chat message. userId is resolved server-side from JWT.
-     * Financial context is assembled server-side and injected into the prompt.
      */
-    sendMessage: (message: string) =>
-        api.post('/ai/chat', { message }),
+    sendMessage: (data: { sessionId: string; message: string }) =>
+        api.post('/v1/ai/chat', data),
+
+    getAnomalies: () => api.get('/v1/ai/anomalies'),
+    acknowledgeAnomaly: (id: string) => api.post(`/v1/ai/anomalies/${id}/acknowledge`),
+
+    getForecast: () => api.get('/v1/ai/forecast'),
+
+    getBudgetRecommendations: () => api.get('/v1/ai/budget-recommendations'),
+
+    getSavingsGoals: () => api.get('/v1/ai/savings-goals'),
+    createSavingsGoal: (data: any) => api.post('/v1/ai/savings-goals', data),
 };
 
+// ─── Gamification Service ───────────────────────────────────────────────────
+export const gamificationService = {
+    getProfile: () => api.get('/v1/gamification/profile'),
+};
 
-
+// ─── Export Service ─────────────────────────────────────────────────────────
+export const exportService = {
+    exportCsv: (period?: string) => api.get('/v1/export/csv', { params: { period }, responseType: 'blob' }),
+    exportPdf: (period?: string) => api.get('/v1/export/pdf', { params: { period }, responseType: 'blob' })
+};

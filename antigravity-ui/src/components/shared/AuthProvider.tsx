@@ -7,7 +7,7 @@ import { authService } from '@/services/api';
 import { Loader2 } from 'lucide-react';
 
 // Routes that don't require authentication
-const PUBLIC_ROUTES = ['/login', '/register'];
+const PUBLIC_ROUTES = ['/login', '/register', '/forgot-password', '/reset-password'];
 
 export default function AuthProvider({ children }: { children: React.ReactNode }) {
     const { isAuthenticated, isValidating, login, logout, setValidating } = useAuth();
@@ -15,8 +15,13 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
     const pathname = usePathname();
 
     useEffect(() => {
+        let isMounted = true;
+
         const validateSession = async () => {
-            console.log('[AuthProvider] Validating session...');
+            if (!PUBLIC_ROUTES.includes(pathname)) {
+                console.log('[AuthProvider] Validating session...', pathname);
+            }
+            
             setValidating(true);
 
             try {
@@ -24,38 +29,48 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
                 const response = await authService.me();
                 const data = response.data;
 
-                console.log('[AuthProvider] Session valid for:', data.email);
-                login({
-                    id: String(data.id),
-                    name: data.username,
-                    email: data.email,
-                    twoFactorEnabled: data.twoFactorEnabled,
-                });
-
-                // Redirect away from public routes if already logged in
-                if (PUBLIC_ROUTES.includes(pathname)) {
-                    router.replace('/dashboard');
+                if (isMounted) {
+                    if (!isAuthenticated) {
+                       login({
+                           id: String(data.id),
+                           name: data.username,
+                           email: data.email,
+                           twoFactorEnabled: data.twoFactorEnabled,
+                       });
+                    }
                 }
             } catch (error: any) {
-                const status = error.response?.status;
-                console.warn('[AuthProvider] Session invalid:', status);
-                logout();
-
-                // Redirect to login only if on a protected route
-                if (!PUBLIC_ROUTES.includes(pathname)) {
-                    router.replace('/login');
+                if (isMounted) {
+                    console.warn('[AuthProvider] Session invalid:', error.response?.status);
+                    logout();
                 }
             } finally {
-                // Always stop validating — prevent infinite spinner
-                setValidating(false);
+                if (isMounted) {
+                    setValidating(false);
+                }
             }
         };
 
         validateSession();
-    }, []); // Run once on mount
 
-    // While validating, show a full-screen spinner so the user never sees a partial state
-    if (isValidating) {
+        return () => {
+            isMounted = false;
+        };
+    }, []); // Only run once on mount
+
+    // Handle routing logic safely inside useEffect
+    useEffect(() => {
+        if (isValidating) return;
+
+        if (isAuthenticated && PUBLIC_ROUTES.includes(pathname)) {
+            router.push('/dashboard');
+        } else if (!isAuthenticated && !PUBLIC_ROUTES.includes(pathname)) {
+            router.push('/login');
+        }
+    }, [isAuthenticated, isValidating, pathname, router]);
+
+    // Show spinner during initial load (only if NOT on public route since we can eagerly show those)
+    if (isValidating && !PUBLIC_ROUTES.includes(pathname)) {
         return (
             <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center">
                 <div className="flex flex-col items-center gap-4">

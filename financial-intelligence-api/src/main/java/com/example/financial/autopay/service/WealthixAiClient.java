@@ -76,4 +76,17 @@ public class WealthixAiClient {
             return Optional.empty();
         }
     }
+
+    /**
+     * Test if the AI service is reachable via /health.
+     */
+    public boolean isHealthy() {
+        try {
+            ResponseEntity<Map> response = restTemplate.getForEntity(
+                    aiServiceUrl + "/health", Map.class);
+            return response.getStatusCode().is2xxSuccessful();
+        } catch (Exception e) {
+            return false;
+        }
+    }
 }

@@ -23,6 +23,9 @@ public interface AutoPayScheduleRepository extends JpaRepository<AutoPaySchedule
         /** Paginated list of active schedules owned by the user. */
         Page<AutoPaySchedule> findByUserIdAndActiveTrue(UUID userId, Pageable pageable);
 
+        /** List of active schedules owned by the user. */
+        List<AutoPaySchedule> findByUserIdAndActiveTrue(UUID userId);
+
         /** All schedules (active + inactive) owned by the user — admin-level view. */
         Page<AutoPaySchedule> findByUserId(UUID userId, Pageable pageable);
 

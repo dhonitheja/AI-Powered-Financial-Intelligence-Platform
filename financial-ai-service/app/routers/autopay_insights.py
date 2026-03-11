@@ -102,6 +102,12 @@ async def categorize(request: CategorizeRequest):
         confidence=float(result.get("confidence", 0.5))
     )
 
+from functools import lru_cache
+
+@lru_cache(maxsize=50)
+def get_cached_benchmark(category: str) -> dict:
+    return BENCHMARKS.get(category.upper(), {})
+
 @router.get("/benchmarks/{category}",
             response_model=BenchmarkResponse)
 async def get_benchmark(category: str):
@@ -109,7 +115,7 @@ async def get_benchmark(category: str):
     Return market benchmarks for a payment category.
     Used by Wealthix UI to show "above/below average" context.
     """
-    data = BENCHMARKS.get(category.upper())
+    data = get_cached_benchmark(category)
     if not data:
         return BenchmarkResponse(
             category=category,

@@ -1,0 +1,159 @@
+name: Wealthix CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+env:
+  JAVA_VERSION: "17"
+  NODE_VERSION: "20"
+  PYTHON_VERSION: "3.11"
+
+jobs:
+
+  # ── Backend Tests ────────────────────────────────────────
+  test-api:
+    name: Spring Boot Tests
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_DB: wealthix_test
+          POSTGRES_USER: wealthix
+          POSTGRES_PASSWORD: test_password
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Java ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: temurin
+          cache: maven
+
+      - name: Run tests
+        working-directory: financial-intelligence-api
+        env:
+          DATABASE_URL: jdbc:postgresql://localhost:5432/wealthix_test
+          DATABASE_USERNAME: wealthix
+          DATABASE_PASSWORD: test_password
+          JWT_SECRET: test_jwt_secret_for_ci_only
+          ENCRYPTION_KEY: test_encryption_key_32bytes_ci!!
+          STRIPE_SECRET_KEY: sk_test_dummy
+          STRIPE_WEBHOOK_SECRET: whsec_test_dummy
+          INTERNAL_AI_SERVICE_SECRET: test_secret
+        run: mvn test -B
+
+      - name: OWASP Dependency Check
+        working-directory: financial-intelligence-api
+        run: mvn dependency-check:check -B
+        continue-on-error: false
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: api-test-results
+          path: financial-intelligence-api/target/surefire-reports/
+
+  # ── AI Service Tests ────────────────────────────────────
+  test-ai:
+    name: FastAPI Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+
+      - name: Install dependencies
+        working-directory: financial-ai-service
+        run: pip install -r requirements.txt pytest httpx
+
+      - name: Run tests
+        working-directory: financial-ai-service
+        env:
+          INTERNAL_SERVICE_SECRET: test_secret
+          GOOGLE_API_KEY: test_key
+        run: pytest tests/ -v
+
+  # ── Frontend Tests ──────────────────────────────────────
+  test-ui:
+    name: Next.js Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: antigravity-ui/package-lock.json
+
+      - name: Install dependencies
+        working-directory: antigravity-ui
+        run: npm ci
+
+      - name: TypeScript check
+        working-directory: antigravity-ui
+        run: npx tsc --noEmit
+
+      - name: Lint
+        working-directory: antigravity-ui
+        run: npm run lint
+
+      - name: npm audit
+        working-directory: antigravity-ui
+        run: npm audit --audit-level=high
+
+      - name: Build
+        working-directory: antigravity-ui
+        env:
+          NEXT_PUBLIC_API_URL: http://localhost:8080
+          NEXT_PUBLIC_PLAID_ENV: sandbox
+        run: npm run build
+
+  # ── Docker Build Check ──────────────────────────────────
+  build-docker:
+    name: Docker Build Check
+    runs-on: ubuntu-latest
+    needs: [test-api, test-ai, test-ui]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build all images
+        run: |
+          docker build -t wealthix-api:test ./financial-intelligence-api
+          docker build -t wealthix-ai:test ./financial-ai-service
+          docker build -t wealthix-ui:test ./antigravity-ui
+
+      - name: Verify non-root users
+        run: |
+          API_USER=$(docker run --rm wealthix-api:test \
+              whoami 2>/dev/null || echo "unknown")
+          AI_USER=$(docker run --rm wealthix-ai:test \
+              whoami 2>/dev/null || echo "unknown")
+          UI_USER=$(docker run --rm wealthix-ui:test \
+              whoami 2>/dev/null || echo "unknown")
+          echo "API user: $API_USER"
+          echo "AI user: $AI_USER"
+          echo "UI user: $UI_USER"
+          # Fail if any container runs as root
+          [[ "$API_USER" != "root" ]] || exit 1
+          [[ "$AI_USER" != "root" ]] || exit 1
+          [[ "$UI_USER" != "root" ]] || exit 1

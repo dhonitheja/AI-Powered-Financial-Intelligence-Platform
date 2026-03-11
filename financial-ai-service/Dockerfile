@@ -1,4 +1,7 @@
-FROM python:3.11-slim
+FROM python:3.11-slim AS runtime
+
+# Non-root user
+RUN groupadd -r wealthix && useradd -r -g wealthix wealthix
 
 WORKDIR /app
 
@@ -6,7 +9,17 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
+RUN chown -R wealthix:wealthix /app
+
+USER wealthix
 
 EXPOSE 8000
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s \
+    --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
+
+CMD ["uvicorn", "app.main:app", \
+    "--host", "0.0.0.0", \
+    "--port", "8000", \
+    "--workers", "2"]

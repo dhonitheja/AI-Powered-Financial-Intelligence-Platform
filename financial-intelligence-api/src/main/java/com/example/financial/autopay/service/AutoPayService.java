@@ -20,11 +20,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.CacheEvict;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
-import java.time.OffsetDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -73,6 +74,7 @@ public class AutoPayService {
     // ── CRUD ──────────────────────────────────────────────────────────────────
 
     @Transactional
+    @CacheEvict(value = "dashboard", key = "#userEmail")
     public AutoPayScheduleResponse create(String userEmail, CreateAutoPayRequest req) {
         AppUser user = resolveUser(userEmail);
 
@@ -136,6 +138,7 @@ public class AutoPayService {
     }
 
     @Transactional
+    @CacheEvict(value = "dashboard", key = "#userEmail")
     public AutoPayScheduleResponse update(String userEmail, UUID scheduleId, UpdateAutoPayRequest req) {
         UUID userId = resolveUserId(userEmail);
         AutoPaySchedule schedule = scheduleRepo.findByIdAndUserId(scheduleId, userId)
@@ -181,6 +184,7 @@ public class AutoPayService {
     }
 
     @Transactional
+    @CacheEvict(value = "dashboard", key = "#userEmail")
     public void softDelete(String userEmail, UUID scheduleId) {
         UUID userId = resolveUserId(userEmail);
         AutoPaySchedule schedule = scheduleRepo.findByIdAndUserId(scheduleId, userId)
@@ -192,6 +196,7 @@ public class AutoPayService {
     }
 
     @Transactional
+    @CacheEvict(value = "dashboard", key = "#userEmail")
     public AutoPayScheduleResponse toggleActive(String userEmail, UUID scheduleId) {
         UUID userId = resolveUserId(userEmail);
         AutoPaySchedule schedule = scheduleRepo.findByIdAndUserId(scheduleId, userId)
@@ -220,6 +225,7 @@ public class AutoPayService {
 
     // ── Dashboard ─────────────────────────────────────────────────────────────
 
+    @Cacheable(value = "dashboard", key = "#userEmail", unless = "#result == null")
     public AutoPayDashboardResponse getDashboard(String userEmail) {
         UUID userId = resolveUserId(userEmail);
         LocalDate today = LocalDate.now();
@@ -446,7 +452,7 @@ public class AutoPayService {
     }
 
     private AppUser resolveUser(String email) {
-        return userRepo.findByEmailIgnoreCase(email)
+        return userRepo.findFirstByEmailIgnoreCase(email)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
     }
 
