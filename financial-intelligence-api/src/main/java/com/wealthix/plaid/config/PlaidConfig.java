@@ -1,7 +1,7 @@
 package com.wealthix.plaid.config;
 
 import com.plaid.client.ApiClient;
-import com.plaid.client.PlaidApi;
+import com.plaid.client.request.PlaidApi;
 import com.plaid.client.model.*;
 import java.util.HashMap;
 import org.springframework.beans.factory.annotation.Value;

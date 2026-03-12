@@ -5,7 +5,7 @@ import com.example.financial.entity.UserBankConnection;
 import com.example.financial.repository.TransactionRepository;
 import com.example.financial.repository.UserBankConnectionRepository;
 import com.example.financial.service.EncryptionService;
-import com.plaid.client.PlaidApi;
+import com.plaid.client.request.PlaidApi;
 import com.plaid.client.model.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
