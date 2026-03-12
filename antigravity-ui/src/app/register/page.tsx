@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { BrainCircuit, Loader2, Mail, Lock, User, ArrowRight, ShieldCheck, AlertCircle } from 'lucide-react';
+import { Sparkles, Loader2, Mail, Lock, User, ArrowRight, ShieldCheck, AlertCircle } from 'lucide-react';
 import { authService } from '@/services/api';
 
 export default function RegisterPage() {
@@ -30,19 +30,34 @@ export default function RegisterPage() {
     };
 
     return (
-        <div className="min-h-screen bg-[#F8FAFC] flex flex-col justify-center items-center p-4">
-            <div className="w-full max-w-md">
-                <div className="flex flex-col items-center mb-8">
-                    <div className="bg-secondary p-3 rounded-2xl shadow-xl shadow-teal-900/10 mb-4">
-                        <BrainCircuit className="w-8 h-8 text-white" />
+        <div className="min-h-screen bg-[#0D0B1E] grid-bg flex flex-col justify-center items-center p-4">
+            {/* Ambient glow */}
+            <div className="fixed inset-0 pointer-events-none">
+                <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-96 h-96 bg-[#D4AF37]/5 rounded-full blur-3xl" />
+                <div className="absolute bottom-1/3 right-1/4 w-64 h-64 bg-[#1E1B4B]/60 rounded-full blur-3xl" />
+            </div>
+
+            <div className="relative w-full max-w-md">
+                {/* Logo + Heading */}
+                <div className="flex flex-col items-center mb-10">
+                    <div className="relative mb-5">
+                        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#D4AF37] to-[#B8962E] flex items-center justify-center shadow-gold-lg">
+                            <Sparkles className="w-8 h-8 text-[#0D0B1E]" />
+                        </div>
+                        <span className="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-400 rounded-full border-2 border-[#0D0B1E] animate-pulse" />
                     </div>
-                    <h1 className="text-3xl font-bold text-primary tracking-tight">Join Antigravity</h1>
-                    <p className="text-slate-500 mt-2 text-center">Start your journey to smarter financial decisions.</p>
+                    <h1 className="text-4xl font-black tracking-tight gold-text">
+                        Welcome to Wealthix
+                    </h1>
+                    <p className="text-slate-500 mt-3 text-center text-sm">
+                        Start your journey to smarter financial decisions.
+                    </p>
                 </div>
 
-                <div className="bg-white rounded-3xl border border-slate-200 shadow-soft p-8 sm:p-10">
+                {/* Card */}
+                <div className="bg-white/5 backdrop-blur-xl rounded-3xl border border-white/10 shadow-gold p-8 sm:p-10">
                     {error && (
-                        <div className="mb-6 p-4 rounded-xl bg-red-50 text-red-600 flex items-center gap-3 text-sm font-medium border border-red-100">
+                        <div className="mb-6 p-4 rounded-xl bg-rose-500/10 text-rose-400 flex items-center gap-3 text-sm font-medium border border-rose-500/20">
                             <AlertCircle className="w-5 h-5 shrink-0" />
                             {error}
                         </div>
@@ -50,52 +65,52 @@ export default function RegisterPage() {
 
                     <form onSubmit={handleSubmit} className="space-y-5">
                         <div className="space-y-2">
-                            <label className="text-sm font-semibold text-primary ml-1">Full Name</label>
+                            <label className="text-sm font-semibold text-slate-300 ml-1">Full Name</label>
                             <div className="relative">
-                                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
                                 <input
                                     type="text"
                                     required
                                     value={name}
                                     onChange={(e) => setName(e.target.value)}
-                                    className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-xl focus:ring-2 focus:ring-secondary/20 focus:border-secondary outline-none transition-all"
+                                    className="w-full pl-11 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/20 focus:border-[#D4AF37]/40 text-slate-200 placeholder:text-slate-600 transition-all"
                                     placeholder="John Doe"
                                 />
                             </div>
                         </div>
 
                         <div className="space-y-2">
-                            <label className="text-sm font-semibold text-primary ml-1">Email Address</label>
+                            <label className="text-sm font-semibold text-slate-300 ml-1">Email Address</label>
                             <div className="relative">
-                                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
                                 <input
                                     type="email"
                                     required
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
-                                    className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-xl focus:ring-2 focus:ring-secondary/20 focus:border-secondary outline-none transition-all"
+                                    className="w-full pl-11 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/20 focus:border-[#D4AF37]/40 text-slate-200 placeholder:text-slate-600 transition-all"
                                     placeholder="name@example.com"
                                 />
                             </div>
                         </div>
 
                         <div className="space-y-2">
-                            <label className="text-sm font-semibold text-primary ml-1">Create Password</label>
+                            <label className="text-sm font-semibold text-slate-300 ml-1">Create Password</label>
                             <div className="relative">
-                                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
                                 <input
                                     type="password"
                                     required
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
-                                    className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-xl focus:ring-2 focus:ring-secondary/20 focus:border-secondary outline-none transition-all"
+                                    className="w-full pl-11 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/20 focus:border-[#D4AF37]/40 text-slate-200 placeholder:text-slate-600 transition-all"
                                     placeholder="••••••••"
                                 />
                             </div>
                         </div>
 
-                        <div className="flex items-start gap-3 p-3 bg-slate-50 rounded-xl border border-slate-100">
-                            <ShieldCheck className="w-5 h-5 text-success shrink-0 mt-0.5" />
+                        <div className="flex items-start gap-3 p-3 bg-white/5 rounded-xl border border-white/10">
+                            <ShieldCheck className="w-5 h-5 text-[#D4AF37] shrink-0 mt-0.5" />
                             <p className="text-[11px] text-slate-500 leading-normal">
                                 By signing up, you agree to our Terms of Service and Privacy Policy. Your data is protected by bank-level encryption.
                             </p>
@@ -104,7 +119,7 @@ export default function RegisterPage() {
                         <button
                             type="submit"
                             disabled={isLoading}
-                            className="w-full bg-primary text-white py-4 rounded-xl font-bold shadow-lg shadow-slate-900/20 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 group disabled:opacity-70"
+                            className="w-full bg-gradient-to-r from-[#D4AF37] to-[#B8962E] text-[#0D0B1E] py-4 rounded-xl font-black shadow-gold hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 group disabled:opacity-70"
                         >
                             {isLoading ? (
                                 <Loader2 className="w-5 h-5 animate-spin" />
@@ -117,15 +132,19 @@ export default function RegisterPage() {
                         </button>
                     </form>
 
-                    <div className="mt-8 pt-8 border-t border-slate-100 text-center">
+                    <div className="mt-8 pt-8 border-t border-white/10 text-center">
                         <p className="text-sm text-slate-500">
                             Already have an account?{' '}
-                            <Link href="/login" className="font-bold text-primary hover:text-secondary transition-colors">
+                            <Link href="/login" className="font-bold text-[#D4AF37] hover:text-[#F5D67B] transition-colors">
                                 Sign In
                             </Link>
                         </p>
                     </div>
                 </div>
+
+                <p className="mt-10 text-center text-[10px] text-slate-600 font-bold uppercase tracking-widest">
+                    SECURE ENCRYPTED ACCESS · POWERED BY JASS · WEALTHIX AI
+                </p>
             </div>
         </div>
     );

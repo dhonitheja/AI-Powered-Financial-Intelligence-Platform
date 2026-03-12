@@ -8,12 +8,14 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -74,6 +76,15 @@ public class TransactionController {
             @Parameter(description = "Time period: weekly | monthly | 6months | yearly | omit for all time") @RequestParam(name = "period", required = false) String period,
             @Parameter(description = "Account type filter: credit | debit | omit for all types") @RequestParam(name = "type", required = false) String type) {
         return ResponseEntity.ok(transactionService.getFinancialSummary(period, type));
+    }
+
+    @GetMapping("/summary/range")
+    @Operation(summary = "Get category spending for an explicit date range")
+    public ResponseEntity<List<CategorySpendingDTO>> getSummaryForRange(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+        return ResponseEntity.ok(
+                transactionService.getFinancialSummaryForRange(startDate, endDate));
     }
 
     // ── Resolve authenticated user from SecurityContext (never from request) ───

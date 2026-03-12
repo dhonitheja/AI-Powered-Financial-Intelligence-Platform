@@ -3,7 +3,7 @@ package com.example.financial.controller;
 import com.example.financial.dto.FinancialSummaryDTO;
 import com.example.financial.security.ChatRateLimiterService;
 import com.example.financial.service.AIClientService;
-import com.example.financial.service.PlaidService;
+import com.wealthix.plaid.service.PlaidService;
 import com.example.financial.service.TransactionService;
 import com.example.financial.dto.CategorySpendingDTO;
 import org.slf4j.Logger;

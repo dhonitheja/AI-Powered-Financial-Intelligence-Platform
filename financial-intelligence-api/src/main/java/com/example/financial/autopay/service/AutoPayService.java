@@ -448,6 +448,9 @@ public class AutoPayService {
                 l.getStatus(),
                 l.getFailureReason(),
                 l.getPlaidTransactionId(),
+                l.getStripePaymentIntentId(),
+                l.getPlaidVerificationStatus() != null ? l.getPlaidVerificationStatus().name() : null,
+                l.getPlaidMatchedTransactionId(),
                 l.getCreatedAt());
     }
 

@@ -27,12 +27,12 @@ const PlaidLink: React.FC<PlaidLinkProps> = ({ onSuccess, userId = "default-user
         setConnectionStatus('linking');
         try {
             console.log("[Plaid] Fetching link token...");
-            const response = await plaidService.createLinkToken(userId);
-            setToken(response.data.link_token);
-            // The inner PlaidLinkTrigger gets rendered and opens modal.
+            const response = await plaidService.createLinkToken();
+            // ApiResponse wrapper: { success: true, data: { link_token: "..." } }
+            setToken(response.data.data.link_token);
         } catch (error: any) {
             console.error('[Plaid] Error creating link token:', error);
-            setErrorMessage(error?.response?.data?.error || "Failed to initialize bank connection. Check console.");
+            setErrorMessage(error?.response?.data?.message || "Failed to initialize bank connection. Check console.");
             setConnectionStatus('error');
             setIsConnecting(false);
         }
@@ -54,25 +54,18 @@ const PlaidLink: React.FC<PlaidLinkProps> = ({ onSuccess, userId = "default-user
         setConnectionStatus('exchanging');
         setErrorMessage(null);
 
-        // We close the modal from Plaid's end automatically by react-plaid-link
-        // But we clean up our token so we dont re-render old session
         setToken(null);
 
         try {
-            // 1. Await exchange completion
             console.log("[Plaid] EXCHANGING public_token...");
-            const exchangeRes = await plaidService.exchangePublicToken(public_token, userId);
-
-            console.log("[Plaid] Exchange Endpoint Response:", exchangeRes.data);
+            const exchangeRes = await plaidService.exchangePublicToken(public_token);
 
             if (exchangeRes.status !== 200) {
-                console.error("[Plaid] Exchange HTTP Error Status:", exchangeRes.status, exchangeRes.data);
-                throw new Error(exchangeRes.data?.error || `Exchange failed with status ${exchangeRes.status}`);
+                throw new Error(exchangeRes.data?.message || `Exchange failed with status ${exchangeRes.status}`);
             }
 
             if (!exchangeRes.data?.success) {
-                console.error("[Plaid] Exchange 200 OK but Success=false:", exchangeRes.data);
-                throw new Error(exchangeRes.data?.error || "Exchange endpoint returned 200 but success flag was false (no specific error provided).");
+                throw new Error(exchangeRes.data?.message || "Exchange server error.");
             }
 
             console.log("[Plaid] EXCHANGE COMPLETE. Access token securely stored.");
@@ -82,8 +75,8 @@ const PlaidLink: React.FC<PlaidLinkProps> = ({ onSuccess, userId = "default-user
             setIsSyncing(true);
             console.log("[Plaid] SYNCING transactions...");
 
-            const syncRes = await plaidService.syncTransactions(userId);
-            console.log("[Plaid] SYNC COMPLETE. Imported:", syncRes.data.imported_count);
+            const syncRes = await plaidService.syncTransactions();
+            console.log("[Plaid] SYNC COMPLETE.");
 
             setConnectionStatus('connected');
             setIsSyncing(false);
@@ -94,7 +87,7 @@ const PlaidLink: React.FC<PlaidLinkProps> = ({ onSuccess, userId = "default-user
         } catch (error: any) {
             console.error('[Plaid] API Flow Error:', error);
             setErrorMessage(
-                error?.response?.data?.error ||
+                error?.response?.data?.message ||
                 error?.message ||
                 "An error occurred during bank verification or sync."
             );
@@ -102,7 +95,7 @@ const PlaidLink: React.FC<PlaidLinkProps> = ({ onSuccess, userId = "default-user
             setIsConnecting(false);
             setIsSyncing(false);
         }
-    }, [onSuccess, userId]);
+    }, [onSuccess]);
 
     // ─── Hook Plaid Link unconditionally at top level ───
     const config: PlaidLinkOptions = {

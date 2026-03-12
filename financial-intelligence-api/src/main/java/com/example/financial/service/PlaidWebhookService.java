@@ -2,6 +2,7 @@ package com.example.financial.service;
 
 import com.example.financial.entity.UserBankConnection;
 import com.example.financial.repository.UserBankConnectionRepository;
+import com.wealthix.plaid.service.PlaidService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -16,6 +17,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * Handles incoming Plaid webhook events:
@@ -136,8 +138,8 @@ public class PlaidWebhookService {
                 .forEach(userId -> {
                     try {
                         log.info("[Webhook] Triggering sync for user {} (item {})", userId, itemId);
-                        int imported = plaidService.syncTransactions(userId);
-                        log.info("[Webhook] Sync complete for user {} — {} new transactions", userId, imported);
+                        plaidService.syncTransactions(userId.toString(), null);
+                        log.info("[Webhook] Sync complete for user {} ", userId);
                     } catch (Exception e) {
                         log.error("[Webhook] Sync failed for user {}: {}", userId, e.getMessage());
                     }

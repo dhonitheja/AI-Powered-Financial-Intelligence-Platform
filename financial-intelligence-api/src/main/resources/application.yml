@@ -3,6 +3,11 @@ plaid:
   secret: ${PLAID_SECRET}
   env: ${PLAID_ENV:sandbox}
   webhook-secret: ${PLAID_WEBHOOK_SECRET:changeme-webhook-secret}
+  products: ${PLAID_PRODUCTS:transactions,auth,identity,balance}
+  country-codes: ${PLAID_COUNTRY_CODES:US,CA,GB}
+  language: en
+  webhook-url: ${PLAID_WEBHOOK_URL:}
+  transaction-days: 30
 
 encryption:
   key: ${ENCRYPTION_KEY:1234567890123456}

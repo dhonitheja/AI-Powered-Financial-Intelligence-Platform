@@ -1,0 +1,10 @@
+package com.wealthix.audit.model;
+
+public enum AuditAction {
+    PLAID_LINK_TOKEN_CREATED,
+    PLAID_BANK_CONNECTED,
+    PLAID_SYNC_TRIGGERED,
+    PLAID_BANK_DISCONNECTED,
+    AUTOPAY_SCHEDULE_CREATED,
+    IDOR_ATTEMPT_BLOCKED
+}

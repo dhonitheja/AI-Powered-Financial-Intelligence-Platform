@@ -1,7 +1,7 @@
 package com.example.financial.controller;
 
 import com.example.financial.service.AIClientService;
-import com.example.financial.service.PlaidService;
+import com.wealthix.plaid.service.PlaidService;
 import com.example.financial.dto.FinancialSummaryDTO;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;

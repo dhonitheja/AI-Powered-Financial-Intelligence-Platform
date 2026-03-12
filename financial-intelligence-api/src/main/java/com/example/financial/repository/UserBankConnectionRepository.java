@@ -10,15 +10,11 @@ import java.util.UUID;
 @Repository
 public interface UserBankConnectionRepository extends JpaRepository<UserBankConnection, UUID> {
 
-    /**
-     * Returns all connections for a given user (may span multiple items/accounts).
-     */
-    List<UserBankConnection> findByUserId(String userId);
+    List<UserBankConnection> findByUserId(UUID userId);
 
-    /**
-     * Returns all connections that share a given Plaid itemId.
-     * Used by the webhook handler to identify affected users without exposing
-     * userIds externally.
-     */
     List<UserBankConnection> findByItemId(String itemId);
+
+    boolean existsByPlaidAccountIdAndUserId(String plaidAccountId, UUID userId);
+
+    java.util.Optional<UserBankConnection> findByIdAndUserId(UUID id, UUID userId);
 }

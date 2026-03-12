@@ -12,16 +12,21 @@ const config: Config = {
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
         primary: {
-          DEFAULT: "#0F172A", // Dark Navy
+          DEFAULT: "#0D0B1E", // Near black
           foreground: "#FFFFFF",
         },
         secondary: {
-          DEFAULT: "#14B8A6", // Teal
-          foreground: "#FFFFFF",
+          DEFAULT: "#D4AF37", // Gold
+          foreground: "#0D0B1E",
         },
         accent: {
-          DEFAULT: "#F1F5F9",
-          foreground: "#0F172A",
+          DEFAULT: "#1E1B4B", // Deep indigo
+          foreground: "#FFFFFF",
+        },
+        gold: {
+          light: "#F5D67B",
+          DEFAULT: "#D4AF37",
+          dark: "#B8962E",
         },
         success: "#10B981",
         warning: "#F59E0B",
@@ -38,6 +43,8 @@ const config: Config = {
       },
       boxShadow: {
         soft: "0 2px 15px -3px rgba(0, 0, 0, 0.07), 0 10px 20px -2px rgba(0, 0, 0, 0.04)",
+        gold: "0 4px 24px rgba(212,175,55,0.18)",
+        "gold-lg": "0 8px 40px rgba(212,175,55,0.25)",
       }
     },
   },

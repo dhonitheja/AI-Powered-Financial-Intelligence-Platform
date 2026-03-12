@@ -21,5 +21,8 @@ public record AutoPayExecutionLogResponse(
         /** Generic message only — no PII. */
         String failureReason,
         String plaidTransactionId,
+        String stripePaymentIntentId,
+        String plaidVerificationStatus,
+        String plaidMatchedTransactionId,
         OffsetDateTime createdAt) {
 }

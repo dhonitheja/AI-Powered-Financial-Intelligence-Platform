@@ -4,8 +4,8 @@ import React, { useState, useRef, useEffect, useCallback } from "react";
 import { chatService } from "@/services/api";
 import { useAuth } from "@/services/authStore";
 import {
-    MessageCircle, X, Send, Bot, User, Loader2,
-    Minimize2, Maximize2, Sparkles, AlertCircle, RefreshCw
+    X, Send, Bot, User, Loader2,
+    Minimize2, Maximize2, Sparkles, AlertCircle
 } from "lucide-react";
 import { cn } from "@/components/ui/Card";
 
@@ -40,19 +40,17 @@ export default function FloatingChatWidget() {
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLTextAreaElement>(null);
 
-    // ── Auto-scroll to latest message ─────────────────────────────────────────
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages]);
 
-    // ── Focus input when opening ──────────────────────────────────────────────
     useEffect(() => {
         if (isOpen && !hasGreeted) {
             setHasGreeted(true);
             setMessages([{
                 id: "greeting",
                 role: "assistant",
-                content: "Hi! I'm **Antigravity**, your AI financial assistant. I have access to your live account data and spending patterns. What would you like to know?",
+                content: "Hi! I'm **Jass**, your Wealthix AI financial assistant. I have access to your live account data and spending patterns. What would you like to know?",
                 timestamp: new Date(),
             }]);
         }
@@ -61,7 +59,6 @@ export default function FloatingChatWidget() {
         }
     }, [isOpen, hasGreeted]);
 
-    // ── Send message ───────────────────────────────────────────────────────────
     const sendMessage = useCallback(async (text: string) => {
         const trimmed = text.trim();
         if (!trimmed || isLoading) return;
@@ -135,11 +132,9 @@ export default function FloatingChatWidget() {
         }
     };
 
-    // ─── Dimensions ────────────────────────────────────────────────────────────
     const widgetW = isExpanded ? "w-[520px]" : "w-[380px]";
     const widgetH = isExpanded ? "h-[680px]" : "h-[520px]";
 
-    // Only render the widget HTML if user is authenticated
     if (!isAuthenticated) return null;
 
     return (
@@ -149,14 +144,14 @@ export default function FloatingChatWidget() {
                 <button
                     id="chat-widget-toggle"
                     onClick={() => setIsOpen(true)}
-                    className="fixed bottom-6 right-6 z-50 group flex items-center gap-3 bg-gradient-to-br from-slate-900 to-slate-800 hover:from-indigo-900 hover:to-purple-900 text-white px-5 py-3.5 rounded-2xl shadow-2xl shadow-slate-900/40 transition-all duration-300 hover:scale-105"
-                    aria-label="Open AI Chat"
+                    className="fixed bottom-6 right-6 z-50 group flex items-center gap-3 bg-gradient-to-br from-[#0D0B1E] to-[#1E1B4B] hover:from-[#1E1B4B] hover:to-[#2D2870] text-white px-5 py-3.5 rounded-2xl shadow-gold-lg border border-[#D4AF37]/30 transition-all duration-300 hover:scale-105 hover:shadow-gold"
+                    aria-label="Open Jass AI Chat"
                 >
                     <div className="relative">
-                        <Sparkles className="w-5 h-5 text-indigo-400 group-hover:text-purple-300 transition-colors" />
+                        <Sparkles className="w-5 h-5 text-[#D4AF37] group-hover:text-[#F5D67B] transition-colors" />
                         <span className="absolute -top-1 -right-1 w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
                     </div>
-                    <span className="text-sm font-bold tracking-tight">Ask Antigravity</span>
+                    <span className="text-sm font-bold tracking-tight">Ask Jass</span>
                 </button>
             )}
 
@@ -164,31 +159,32 @@ export default function FloatingChatWidget() {
             {isOpen && (
                 <div
                     className={cn(
-                        "fixed bottom-6 right-6 z-50 flex flex-col rounded-3xl shadow-2xl shadow-slate-900/30 border border-white/10 overflow-hidden transition-all duration-300 bg-white",
+                        "fixed bottom-6 right-6 z-50 flex flex-col rounded-3xl shadow-gold-lg border border-[#D4AF37]/20 overflow-hidden transition-all duration-300",
                         widgetW, widgetH
                     )}
+                    style={{ background: "#0D0B1E" }}
                     id="chat-panel"
                 >
                     {/* ── Header */}
-                    <div className="flex items-center justify-between px-5 py-4 bg-gradient-to-r from-slate-900 to-slate-800 flex-shrink-0">
+                    <div className="flex items-center justify-between px-5 py-4 bg-gradient-to-r from-[#0D0B1E] to-[#1E1B4B] border-b border-[#D4AF37]/20 flex-shrink-0">
                         <div className="flex items-center gap-3">
                             <div className="relative">
-                                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg">
-                                    <Sparkles className="w-4 h-4 text-white" />
+                                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#D4AF37] to-[#B8962E] flex items-center justify-center shadow-gold">
+                                    <Sparkles className="w-4 h-4 text-[#0D0B1E]" />
                                 </div>
-                                <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-400 rounded-full border-2 border-slate-900" />
+                                <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-400 rounded-full border-2 border-[#0D0B1E]" />
                             </div>
                             <div>
-                                <p className="text-sm font-extrabold text-white leading-tight">Antigravity AI</p>
-                                <p className="text-[10px] text-slate-400 font-medium">
-                                    {remaining !== null ? `${remaining} messages left` : "Financial Assistant"}
+                                <p className="text-sm font-extrabold text-white leading-tight gold-text">Jass</p>
+                                <p className="text-[10px] text-[#D4AF37]/60 font-medium">
+                                    {remaining !== null ? `${remaining} messages left` : "Wealthix AI · Financial Assistant"}
                                 </p>
                             </div>
                         </div>
                         <div className="flex items-center gap-1.5">
                             <button
                                 onClick={() => setIsExpanded(e => !e)}
-                                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-all"
+                                className="p-1.5 rounded-lg text-slate-500 hover:text-white hover:bg-white/10 transition-all"
                                 title={isExpanded ? "Minimize" : "Expand"}
                             >
                                 {isExpanded ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
@@ -198,7 +194,7 @@ export default function FloatingChatWidget() {
                                     setIsOpen(false);
                                     setIsExpanded(false);
                                 }}
-                                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-all"
+                                className="p-1.5 rounded-lg text-slate-500 hover:text-white hover:bg-white/10 transition-all"
                                 title="Close"
                             >
                                 <X className="w-4 h-4" />
@@ -207,22 +203,22 @@ export default function FloatingChatWidget() {
                     </div>
 
                     {/* ── Messages */}
-                    <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50/50" id="chat-messages">
+                    <div className="flex-1 overflow-y-auto p-4 space-y-4" id="chat-messages"
+                        style={{ background: "rgba(13,11,30,0.8)" }}>
                         {messages.map((msg) => (
                             <ChatBubble key={msg.id} message={msg} />
                         ))}
 
-                        {/* Loading indicator */}
                         {isLoading && (
                             <div className="flex items-end gap-2">
-                                <div className="w-7 h-7 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center flex-shrink-0">
-                                    <Bot className="w-3.5 h-3.5 text-white" />
+                                <div className="w-7 h-7 rounded-xl bg-gradient-to-br from-[#D4AF37] to-[#B8962E] flex items-center justify-center flex-shrink-0">
+                                    <Bot className="w-3.5 h-3.5 text-[#0D0B1E]" />
                                 </div>
-                                <div className="bg-white border border-slate-100 rounded-2xl rounded-bl-sm px-4 py-3 shadow-sm">
+                                <div className="bg-white/5 border border-white/10 rounded-2xl rounded-bl-sm px-4 py-3">
                                     <div className="flex items-center gap-1.5">
-                                        <div className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
-                                        <div className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
-                                        <div className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+                                        <div className="w-1.5 h-1.5 bg-[#D4AF37] rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
+                                        <div className="w-1.5 h-1.5 bg-[#D4AF37] rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
+                                        <div className="w-1.5 h-1.5 bg-[#D4AF37] rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
                                     </div>
                                 </div>
                             </div>
@@ -230,14 +226,15 @@ export default function FloatingChatWidget() {
                         <div ref={messagesEndRef} />
                     </div>
 
-                    {/* ── Suggestions (shown when no user messages yet) */}
+                    {/* ── Suggestions */}
                     {messages.length <= 1 && !isLoading && (
-                        <div className="px-4 pb-3 bg-slate-50/50 flex flex-wrap gap-2 flex-shrink-0">
+                        <div className="px-4 pb-3 flex flex-wrap gap-2 flex-shrink-0 border-t border-white/5 pt-3"
+                            style={{ background: "rgba(13,11,30,0.8)" }}>
                             {SUGGESTIONS.map((s) => (
                                 <button
                                     key={s}
                                     onClick={() => sendMessage(s)}
-                                    className="text-xs px-3 py-1.5 bg-white border border-slate-200 rounded-full text-slate-600 hover:border-indigo-300 hover:text-indigo-700 hover:bg-indigo-50 transition-all font-semibold"
+                                    className="text-xs px-3 py-1.5 bg-white/5 border border-white/10 rounded-full text-slate-400 hover:border-[#D4AF37]/50 hover:text-[#F5D67B] hover:bg-[#D4AF37]/5 transition-all font-semibold"
                                 >
                                     {s}
                                 </button>
@@ -247,12 +244,12 @@ export default function FloatingChatWidget() {
 
                     {/* ── Rate limit bar */}
                     {remaining !== null && (
-                        <div className="px-4 pt-1 bg-white flex-shrink-0">
-                            <div className="h-0.5 bg-slate-100 rounded-full overflow-hidden">
+                        <div className="px-4 pt-1 flex-shrink-0" style={{ background: "#0D0B1E" }}>
+                            <div className="h-0.5 bg-white/10 rounded-full overflow-hidden">
                                 <div
                                     className={cn(
                                         "h-full rounded-full transition-all duration-500",
-                                        remaining > 5 ? "bg-emerald-400" : remaining > 2 ? "bg-amber-400" : "bg-rose-400"
+                                        remaining > 5 ? "bg-[#D4AF37]" : remaining > 2 ? "bg-amber-400" : "bg-rose-400"
                                     )}
                                     style={{ width: `${(remaining / 10) * 100}%` }}
                                 />
@@ -261,21 +258,22 @@ export default function FloatingChatWidget() {
                     )}
 
                     {/* ── Input */}
-                    <div className="flex items-end gap-3 px-4 py-3 bg-white border-t border-slate-100 flex-shrink-0">
+                    <div className="flex items-end gap-3 px-4 py-3 border-t border-white/10 flex-shrink-0"
+                        style={{ background: "#0D0B1E" }}>
                         <textarea
                             ref={inputRef}
                             id="chat-input"
                             value={input}
                             onChange={(e) => setInput(e.target.value)}
                             onKeyDown={handleKeyDown}
-                            placeholder={rateLimited ? "Rate limit reached — wait a moment..." : "Ask about your finances..."}
+                            placeholder={rateLimited ? "Rate limit reached — wait a moment..." : "Ask Jass about your finances..."}
                             disabled={isLoading || rateLimited}
                             rows={1}
                             className={cn(
-                                "flex-1 resize-none bg-slate-50 border rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:ring-2 transition-all max-h-[100px]",
+                                "flex-1 resize-none border rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:ring-2 transition-all max-h-[100px] bg-white/5 text-slate-200 placeholder:text-slate-600",
                                 rateLimited
-                                    ? "border-rose-200 text-rose-400 cursor-not-allowed"
-                                    : "border-slate-200 text-primary focus:ring-indigo-300/30 focus:border-indigo-300",
+                                    ? "border-rose-500/30 text-rose-400 cursor-not-allowed"
+                                    : "border-white/10 focus:ring-[#D4AF37]/20 focus:border-[#D4AF37]/40",
                             )}
                             style={{ overflowY: "auto" }}
                         />
@@ -286,8 +284,8 @@ export default function FloatingChatWidget() {
                             className={cn(
                                 "p-3 rounded-xl transition-all flex-shrink-0",
                                 input.trim() && !isLoading && !rateLimited
-                                    ? "bg-gradient-to-br from-indigo-600 to-purple-600 text-white hover:scale-105 shadow-md shadow-indigo-500/25"
-                                    : "bg-slate-100 text-slate-300 cursor-not-allowed"
+                                    ? "bg-gradient-to-br from-[#D4AF37] to-[#B8962E] text-[#0D0B1E] hover:scale-105 shadow-gold"
+                                    : "bg-white/5 text-slate-600 cursor-not-allowed"
                             )}
                         >
                             {isLoading
@@ -305,48 +303,45 @@ export default function FloatingChatWidget() {
 function ChatBubble({ message }: { message: ChatMessage }) {
     const isUser = message.role === "user";
 
-    // Parse **bold** markdown
     const formatContent = (text: string) => {
         const parts = text.split(/(\*\*.*?\*\*)/g);
         return parts.map((part, i) =>
             part.startsWith("**") && part.endsWith("**")
-                ? <strong key={i}>{part.slice(2, -2)}</strong>
+                ? <strong key={i} className="text-[#F5D67B]">{part.slice(2, -2)}</strong>
                 : part
         );
     };
 
     return (
         <div className={cn("flex items-end gap-2", isUser ? "flex-row-reverse" : "flex-row")}>
-            {/* Avatar */}
             {!isUser && (
-                <div className="w-7 h-7 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center flex-shrink-0">
-                    <Bot className="w-3.5 h-3.5 text-white" />
+                <div className="w-7 h-7 rounded-xl bg-gradient-to-br from-[#D4AF37] to-[#B8962E] flex items-center justify-center flex-shrink-0">
+                    <Bot className="w-3.5 h-3.5 text-[#0D0B1E]" />
                 </div>
             )}
             {isUser && (
-                <div className="w-7 h-7 rounded-xl bg-slate-800 flex items-center justify-center flex-shrink-0">
-                    <User className="w-3.5 h-3.5 text-white" />
+                <div className="w-7 h-7 rounded-xl bg-[#1E1B4B] border border-white/10 flex items-center justify-center flex-shrink-0">
+                    <User className="w-3.5 h-3.5 text-slate-300" />
                 </div>
             )}
 
-            {/* Bubble */}
             <div className={cn(
                 "max-w-[80%] px-4 py-3 rounded-2xl text-sm leading-relaxed",
                 isUser
-                    ? "bg-slate-900 text-white rounded-br-sm"
+                    ? "bg-[#1E1B4B] border border-[#D4AF37]/20 text-slate-200 rounded-br-sm"
                     : message.isError
-                        ? "bg-rose-50 border border-rose-200 text-rose-700 rounded-bl-sm"
-                        : "bg-white border border-slate-100 text-slate-800 shadow-sm rounded-bl-sm"
+                        ? "bg-rose-500/10 border border-rose-500/20 text-rose-400 rounded-bl-sm"
+                        : "bg-white/5 border border-white/10 text-slate-300 rounded-bl-sm"
             )}>
                 {message.isError && (
-                    <div className="flex items-center gap-1.5 mb-1 text-rose-600 font-bold text-[10px] uppercase">
+                    <div className="flex items-center gap-1.5 mb-1 text-rose-400 font-bold text-[10px] uppercase">
                         <AlertCircle className="w-3 h-3" /> Error
                     </div>
                 )}
                 <p className="whitespace-pre-line">{formatContent(message.content)}</p>
                 <p className={cn(
-                    "text-[9px] mt-1.5 font-medium",
-                    isUser ? "text-slate-400 text-right" : "text-slate-400"
+                    "text-[9px] mt-1.5 font-medium text-slate-600",
+                    isUser && "text-right"
                 )}>
                     {message.timestamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                 </p>

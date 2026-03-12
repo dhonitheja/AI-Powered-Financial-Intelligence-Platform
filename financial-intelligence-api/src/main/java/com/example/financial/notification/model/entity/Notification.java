@@ -6,7 +6,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
-@Entity
+@Entity(name = "NotificationRecord")
 @Table(name = "notifications")
 public class Notification {
 

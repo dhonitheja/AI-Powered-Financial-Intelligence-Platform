@@ -109,16 +109,63 @@ export const transactionService = {
 
 // ─── Plaid Service ─────────────────────────────────────────────────────────
 export const plaidService = {
-    createLinkToken: (userId: string = 'default-user') =>
-        api.post('/plaid/create-link-token', { userId }),
-    exchangePublicToken: (publicToken: string, userId: string = 'default-user') =>
-        api.post('/plaid/exchange-public-token', { public_token: publicToken, userId }),
-    syncTransactions: (userId: string = 'default-user') =>
-        api.post('/plaid/sync', { userId }),
+    createLinkToken: () =>
+        api.post('/v1/plaid/link-token'),
+    exchangePublicToken: (publicToken: string) =>
+        api.post('/v1/plaid/exchange', { publicToken }),
+    syncTransactions: () =>
+        api.post('/v1/plaid/sync'),
     /** Returns totalAssets, totalLiabilities, netWorth, creditUtilization, accounts[] */
-    getAccountSummary: () => api.get('/plaid/accounts'),
+    getAccountSummary: () => api.get('/v1/plaid/accounts'),
     /** Lightweight polling endpoint — returns { accountCount, lastSyncedAt } — no userId needed */
-    getSyncStatus: () => api.get('/plaid/sync-status'),
+    getSyncStatus: () => api.get('/v1/plaid/sync-status'),
+    /** Returns all linked bank/credit connections for the authenticated user */
+    getConnections: () => api.get('/v1/plaid/connections'),
+};
+
+// ─── Budget Service ─────────────────────────────────────────────────────────
+export type BudgetPeriod = 'WEEKLY' | 'MONTHLY';
+
+export interface CategoryBudget {
+    id: string;
+    category: string;
+    limitAmount: number;
+    period: BudgetPeriod;
+    active: boolean;
+    createdAt: string;
+}
+
+export const budgetService = {
+    getAll: () => api.get<CategoryBudget[]>('/v1/budgets'),
+    create: (data: { category: string; limitAmount: number; period: BudgetPeriod }) =>
+        api.post<CategoryBudget>('/v1/budgets', data),
+    update: (id: string, data: { category: string; limitAmount: number; period: BudgetPeriod }) =>
+        api.put<CategoryBudget>(`/v1/budgets/${id}`, data),
+    remove: (id: string) => api.delete(`/v1/budgets/${id}`),
+};
+
+// ─── Analytics Service ──────────────────────────────────────────────────────
+export interface CategoryComparison {
+    category: string;
+    currentPeriodSpend: number;
+    previousPeriodSpend: number;
+    changePercent: number;
+}
+
+export interface ComparisonData {
+    period: string;
+    currentPeriodLabel: string;
+    previousPeriodLabel: string;
+    currentTotal: number;
+    previousTotal: number;
+    categories: CategoryComparison[];
+}
+
+export const analyticsService = {
+    getComparison: (period: 'weekly' | 'monthly') =>
+        api.get<ComparisonData>('/analytics/comparison', { params: { period } }),
+    getRangeSpending: (startDate: string, endDate: string) =>
+        api.get('/summary/range', { params: { startDate, endDate } }),
 };
 
 // ─── AI Chat & Analytics Service ──────────────────────────────────────────────

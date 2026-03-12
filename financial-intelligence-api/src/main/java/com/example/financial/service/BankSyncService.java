@@ -1,13 +1,17 @@
 package com.example.financial.service;
 
+import com.example.financial.budget.service.BudgetEnforcementService;
 import com.example.financial.entity.UserBankConnection;
+import com.example.financial.repository.AppUserRepository;
 import com.example.financial.repository.UserBankConnectionRepository;
+import com.wealthix.plaid.service.PlaidService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.UUID;
 
 /**
  * BankSyncService — orchestrates Plaid transaction syncs.
@@ -27,13 +31,19 @@ public class BankSyncService {
         private final PlaidService plaidService;
         private final NotificationService notificationService;
         private final UserBankConnectionRepository connectionRepository;
+        private final BudgetEnforcementService budgetEnforcementService;
+        private final AppUserRepository appUserRepository;
 
         public BankSyncService(PlaidService plaidService,
                         NotificationService notificationService,
-                        UserBankConnectionRepository connectionRepository) {
+                        UserBankConnectionRepository connectionRepository,
+                        BudgetEnforcementService budgetEnforcementService,
+                        AppUserRepository appUserRepository) {
                 this.plaidService = plaidService;
                 this.notificationService = notificationService;
                 this.connectionRepository = connectionRepository;
+                this.budgetEnforcementService = budgetEnforcementService;
+                this.appUserRepository = appUserRepository;
         }
 
         // ─── Webhook-triggered sync (primary path) ─────────────────────────────────
@@ -49,11 +59,9 @@ public class BankSyncService {
         public void syncForUser(String userId) {
                 log.info("[BankSync] Starting sync for user {} (webhook-triggered)", userId);
                 try {
-                        int imported = plaidService.syncTransactions(userId);
-                        log.info("[BankSync] Sync complete for user {} — {} new transactions", userId, imported);
-                        if (imported > 0) {
-                                notificationService.sendBankSyncCompletion(userId, imported);
-                        }
+                        plaidService.syncTransactions(userId, null);
+                        log.info("[BankSync] Sync complete for user {}", userId);
+                        triggerBudgetCheck(userId);
                 } catch (Exception e) {
                         log.error("[BankSync] Sync failed for user {}: {}", userId, e.getMessage());
                 }
@@ -65,13 +73,23 @@ public class BankSyncService {
          * Performs a synchronous Plaid sync for a given user and returns the count.
          * Used by the manual sync endpoint (/api/plaid/sync).
          */
-        public int syncNow(String userId) throws Exception {
+        public void syncNow(String userId) throws Exception {
                 log.info("[BankSync] On-demand sync for user {}", userId);
-                int imported = plaidService.syncTransactions(userId);
-                if (imported > 0) {
-                        notificationService.sendBankSyncCompletion(userId, imported);
+                plaidService.syncTransactions(userId, null);
+                triggerBudgetCheck(userId);
+        }
+
+        private void triggerBudgetCheck(String userId) {
+                try {
+                        String userEmail = appUserRepository.findById(userId)
+                                .map(u -> u.getEmail())
+                                .orElse(null);
+                        if (userEmail != null) {
+                                budgetEnforcementService.checkAllBudgets(UUID.fromString(userId), userEmail);
+                        }
+                } catch (Exception e) {
+                        log.warn("[BankSync] Budget check skipped for user {}: {}", userId, e.getMessage());
                 }
-                return imported;
         }
 
         // ─── Sync Status Endpoint Support ─────────────────────────────────────────
@@ -83,7 +101,7 @@ public class BankSyncService {
          * without needing to expose userId on the client.
          */
         public SyncStatusDTO getSyncStatus(String userId) {
-                List<UserBankConnection> connections = connectionRepository.findByUserId(userId);
+                List<UserBankConnection> connections = connectionRepository.findByUserId(UUID.fromString(userId));
                 int accountCount = connections.size();
                 long lastUpdatedEpoch = connections.stream()
                                 .mapToLong(c -> c.getUpdatedAt() != null

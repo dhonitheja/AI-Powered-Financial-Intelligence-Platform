@@ -1,9 +1,12 @@
 package com.example.financial.service;
 
+import com.example.financial.budget.service.BudgetEnforcementService;
 import com.example.financial.dto.AIAnalysisResponse;
 import com.example.financial.dto.CategorySpendingDTO;
+import com.example.financial.entity.AppUser;
 import com.example.financial.entity.Transaction;
 import com.example.financial.exception.ResourceNotFoundException;
+import com.example.financial.repository.AppUserRepository;
 import com.example.financial.repository.TransactionRepository;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -11,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
@@ -24,13 +28,19 @@ public class TransactionService {
     private final TransactionRepository transactionRepository;
     private final AIClientService aiClientService;
     private final NotificationService notificationService;
+    private final BudgetEnforcementService budgetEnforcementService;
+    private final AppUserRepository appUserRepository;
 
     public TransactionService(TransactionRepository transactionRepository,
             AIClientService aiClientService,
-            NotificationService notificationService) {
+            NotificationService notificationService,
+            BudgetEnforcementService budgetEnforcementService,
+            AppUserRepository appUserRepository) {
         this.transactionRepository = transactionRepository;
         this.aiClientService = aiClientService;
         this.notificationService = notificationService;
+        this.budgetEnforcementService = budgetEnforcementService;
+        this.appUserRepository = appUserRepository;
     }
 
     // ─── Period Resolver ───────────────────────────────────────────────────────
@@ -156,15 +166,25 @@ public class TransactionService {
                 transactionRepository.save(transaction);
                 log.info("Analysis completed for transaction: {}", id);
 
-                String userId = "test-user";
+                // Resolve real user email for notifications
+                String userEmail = appUserRepository.findById(transaction.getUserId().toString())
+                        .map(AppUser::getEmail)
+                        .orElse(null);
+
                 if (aiResponse.getFraudRiskScore() >= 80) {
-                    notificationService.sendHighRiskAlert(userId,
+                    notificationService.sendHighRiskAlert(userEmail != null ? userEmail : "unknown",
                             transaction.getDescription(), transaction.getAmount(),
                             aiResponse.getExplanation());
                 } else if (transaction.getAmount() > 500.0) {
-                    notificationService.sendSpendingAnomalyAlert(userId,
+                    notificationService.sendSpendingAnomalyAlert(userEmail != null ? userEmail : "unknown",
                             transaction.getCategory(), transaction.getAmount(),
                             "This transaction is unusually large. " + aiResponse.getExplanation());
+                }
+
+                // Check category spending limits
+                if (userEmail != null) {
+                    budgetEnforcementService.checkBudgets(
+                            transaction.getUserId(), aiResponse.getCategory(), userEmail);
                 }
             }
         } catch (Exception e) {
@@ -206,5 +226,13 @@ public class TransactionService {
     @Transactional(readOnly = true)
     public List<CategorySpendingDTO> getFinancialSummary() {
         return getFinancialSummary(null, null);
+    }
+
+    /** Category spending for an explicit date range. */
+    @Transactional(readOnly = true)
+    public List<CategorySpendingDTO> getFinancialSummaryForRange(LocalDate startDate, LocalDate endDate) {
+        LocalDateTime start = startDate.atStartOfDay();
+        LocalDateTime end = endDate.atTime(23, 59, 59);
+        return transactionRepository.calculateSpendingByCategoryBetween(start, end);
     }
 }

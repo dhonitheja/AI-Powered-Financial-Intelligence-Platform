@@ -3,21 +3,35 @@ package com.example.financial.entity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
-
-import java.time.LocalDateTime;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import java.time.LocalDate;
+import java.util.UUID;
 
 @Entity
 @Table(name = "transactions")
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class Transaction extends BaseEntity {
+
+    @Column(name = "user_id", nullable = false)
+    private UUID userId;
 
     @Column(nullable = false)
     private String description;
+
+    @Column(name = "merchant_name")
+    private String merchantName;
 
     @Column(nullable = false)
     private Double amount;
 
     @Column(name = "transaction_date", nullable = false)
-    private LocalDateTime transactionDate;
+    private LocalDate transactionDate;
 
     @Column(nullable = false)
     private String category;
@@ -31,182 +45,19 @@ public class Transaction extends BaseEntity {
     @Column(name = "plaid_transaction_id", unique = true)
     private String plaidTransactionId;
 
-    @Column(name = "deleted", nullable = false)
-    private Boolean deleted = false;
+    @Column(name = "plaid_account_id")
+    private String plaidAccountId;
 
-    /**
-     * Plaid account ID this transaction originated from.
-     * Null for manually-entered transactions.
-     */
-    @Column(name = "account_id")
-    private String accountId;
-
-    /**
-     * Account type: CHECKING, SAVINGS, CREDIT.
-     * Defaults to CHECKING for manually-entered transactions.
-     * Used for credit/debit filtering at the database level.
-     */
     @Column(name = "account_type", length = 20)
     private String accountType = "CHECKING";
 
-    public Transaction() {
-    }
+    @Column(nullable = false)
+    private boolean pending = false;
 
-    public Transaction(String description, Double amount, LocalDateTime transactionDate, String category) {
-        this.description = description;
-        this.amount = amount;
-        this.transactionDate = transactionDate;
-        this.category = category;
-    }
-
-    // ── Builder ────────────────────────────────────────────────────────────────
-
-    public static class TransactionBuilder {
-        private String description;
-        private Double amount;
-        private LocalDateTime transactionDate;
-        private String category;
-        private Double fraudRiskScore;
-        private String aiExplanation;
-        private String plaidTransactionId;
-        private String accountId;
-        private String accountType;
-
-        public TransactionBuilder description(String description) {
-            this.description = description;
-            return this;
-        }
-
-        public TransactionBuilder amount(Double amount) {
-            this.amount = amount;
-            return this;
-        }
-
-        public TransactionBuilder transactionDate(LocalDateTime transactionDate) {
-            this.transactionDate = transactionDate;
-            return this;
-        }
-
-        public TransactionBuilder category(String category) {
-            this.category = category;
-            return this;
-        }
-
-        public TransactionBuilder fraudRiskScore(Double fraudRiskScore) {
-            this.fraudRiskScore = fraudRiskScore;
-            return this;
-        }
-
-        public TransactionBuilder aiExplanation(String aiExplanation) {
-            this.aiExplanation = aiExplanation;
-            return this;
-        }
-
-        public TransactionBuilder plaidTransactionId(String plaidTransactionId) {
-            this.plaidTransactionId = plaidTransactionId;
-            return this;
-        }
-
-        public TransactionBuilder accountId(String accountId) {
-            this.accountId = accountId;
-            return this;
-        }
-
-        public TransactionBuilder accountType(String accountType) {
-            this.accountType = accountType;
-            return this;
-        }
-
-        public Transaction build() {
-            Transaction t = new Transaction();
-            t.setDescription(description);
-            t.setAmount(amount);
-            t.setTransactionDate(transactionDate);
-            t.setCategory(category);
-            t.setFraudRiskScore(fraudRiskScore);
-            t.setAiExplanation(aiExplanation);
-            t.setPlaidTransactionId(plaidTransactionId);
-            t.setAccountId(accountId);
-            t.setAccountType(accountType != null ? accountType : "CHECKING");
-            return t;
-        }
-    }
-
-    public static TransactionBuilder builder() {
-        return new TransactionBuilder();
-    }
-
-    // ── Getters & Setters ──────────────────────────────────────────────────────
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public Double getAmount() {
-        return amount;
-    }
-
-    public void setAmount(Double amount) {
-        this.amount = amount;
-    }
-
-    public LocalDateTime getTransactionDate() {
-        return transactionDate;
-    }
-
-    public void setTransactionDate(LocalDateTime transactionDate) {
-        this.transactionDate = transactionDate;
-    }
-
-    public String getCategory() {
-        return category;
-    }
-
-    public void setCategory(String category) {
-        this.category = category;
-    }
-
-    public Double getFraudRiskScore() {
-        return fraudRiskScore;
-    }
-
-    public void setFraudRiskScore(Double fraudRiskScore) {
-        this.fraudRiskScore = fraudRiskScore;
-    }
-
-    public String getAiExplanation() {
-        return aiExplanation;
-    }
-
-    public void setAiExplanation(String aiExplanation) {
-        this.aiExplanation = aiExplanation;
-    }
-
-    public String getPlaidTransactionId() {
-        return plaidTransactionId;
-    }
-
-    public void setPlaidTransactionId(String plaidTransactionId) {
-        this.plaidTransactionId = plaidTransactionId;
-    }
-
-    public String getAccountId() {
-        return accountId;
-    }
-
-    public void setAccountId(String accountId) {
-        this.accountId = accountId;
-    }
-
-    public String getAccountType() {
-        return accountType;
-    }
-
-    public void setAccountType(String accountType) {
-        this.accountType = accountType;
-    }
+    @Column(name = "deleted", nullable = false)
+    private boolean deleted = false;
+    
+    // Compatibility for legacy code
+    public void setAccountId(String accountId) { this.plaidAccountId = accountId; }
+    public String getAccountId() { return plaidAccountId; }
 }
