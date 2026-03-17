@@ -99,5 +99,4 @@ Wealthix turns financial management into a game. Earn XP for staying under budge
 
 ---
 
-## 📋 License
-Developed by the **Antigravity AI Agent** for the Financial Freedom Initiative. Built for transparency, speed, and intelligence.
+
