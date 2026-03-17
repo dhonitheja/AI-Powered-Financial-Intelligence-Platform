@@ -1,66 +1,96 @@
-# Wealthix — AI-Powered Financial Intelligence Platform
+# 🌌 Wealthix: AI-Powered Financial Intelligence
 
-Wealthix is a comprehensive, next-generation financial intelligence platform that empowers users to seamlessly synthesize their financial footprint, interact with advanced AI-driven generative financial analytics, track spending securely, and intuitively uncover wealth-building insights.
+> **Intelligent Wealth Management. Redefined.**
 
-This repository encapsulates the full-stack system, leveraging a robust Spring Boot backend architecture alongside a modern, dynamic Next.js frontend GUI and FastAPI-based microservices for asynchronous generative artificial intelligence querying.
+Wealthix is a high-performance, next-generation financial intelligence platform that merges traditional banking with generative AI. It empowers users to synthesize their financial footprint, interact with advanced AI-driven analytics, and uncover wealth-building insights through a premium, quantum-intelligent interface.
 
-## System Architecture Overview
+---
 
-The system abstracts into three decoupled core components:
-1. **wealthix-api** (Java 17, Spring Boot 3.2.3): The monolithic core REST API. Orchestrates user authentication, CRUD operations over secure financial transaction data, Plaid integration logic, cron-scheduled AutoPay transactions, WebSocket STOMP messaging for gamification events, and exports.
-2. **wealthix-ui** (Next.js 14, React, TypeScript): The frontend user-facing dashboard. Highly responsive visually, meticulously secured via CSRF/JWT interceptors, implements real-time WebSockets to toast achievements dynamically, natively integrates visual AI graphs, and features high fidelity layout/styling leveraging Tailwind CSS natively alongside Lucide React visual artifacts.
-3. **wealthix-ai** (Python 3.11, FastAPI): A high-performance Python microservice optimized to perform isolated interactions with Google's Gemini language model architectures. Computes and streams advanced ML-grade risk scorings over raw transaction meta-text, detects spending anomalies mathematically, and powers the Generative Assistant interface natively inside a strictly isolated runtime sandbox.
+## ✨ Features Showcase
 
-## Security Baseline Principles
-- Backend leverages **AES-256-GCM** encryption symmetrically storing sensitive credentials gracefully within the persistence database natively.
-- No PII is emitted to external providers explicitly. Transaction data sent to AI contexts only ever includes randomized strings and generalized numbers—Account ID linking and specific names are masked securely.
-- Cross-Site Request Forgery (CSRF) protection is mapped to HTTP-only explicit stateless session configurations utilizing encrypted JWT tokens (HS512 signing blocks).
+### 📊 Intelligent Dashboard
+Monitor your **Net Worth**, **Cash Flow**, and **Spending Velocity** in real-time. Our dashboard provides a 360-degree view of your financial health with beautiful, interactive visualizations.
 
-## Development Setup
+![Dashboard Preview](screenshots/dashboard.png)
 
-The standard environment encapsulates modern dependency suites automatically injected via Maven & NPM scripts natively. Ensure you have installed standard tools properly on your system natively including node, npm, python (pip), and java.
+### 🤖 AI Financial Assistant (Jass)
+Integrated with **Google Gemini 1.5**, Jass is your personal financial quant. Ask complex questions about your spending, get savings recommendations, or forecast your future net worth.
 
-### 1. Database (PostgreSQL / Flyway)
-Data models map onto a PostgreSQL dialect naturally inside `application-dev.yml`. We automatically provision a containerized local Postgres deployment using Flyway script iterations. Database versioning dynamically controls table architecture and constraint bounds.
+![AI Assistant](screenshots/assistant.png)
 
-### 2. Run API Backend (`wealthix-api`)
-```
-cd financial-intelligence-api
+### 📈 Precision Analytics
+Deep-dive into your spending patterns with period-over-period comparisons. Understand exactly where your money goes with granular category breakdowns and trend indices.
+
+![Analytics](screenshots/analytics.png)
+
+### 🛡️ Risk & Fraud Detection
+Every transaction is passed through our AI risk engine, assigning a safety score and providing context on potential anomalies or suspicious Merchant activities.
+
+![Transactions & Risk](screenshots/transactions.png)
+
+### 🎯 Financial Insights & Health
+Get a algorithmic health score based on your spending habits, debt-to-income ratio, and savings rate. Receive proactive insights to optimize your path to financial freedom.
+
+![AI Insights](screenshots/insights.png)
+
+---
+
+## 🛠️ Technical Architecture
+
+Wealthix is built on a resilient, decoupled microservices architecture designed for scale and security.
+
+- **Frontend (`wealthix-ui`)**: Next.js 14, React, TypeScript, Tailwind CSS, Recharts, Framer Motion.
+- **Core API (`wealthix-api`)**: Java 23, Spring Boot 3.2.x, Spring Security, JWT, PostgreSQL, Plaid SDK.
+- **AI Intelligence (`financial-ai-service`)**: Python 3.11, FastAPI, Google Gemini 1.5 Flash, Pydantic.
+- **Infrastructure**: Docker, Flyway (DB Migrations), JUnit 5, Pytest.
+
+---
+
+## 🚀 Getting Started
+
+Ensure you have **Java 21+**, **Node.js 18+**, and **Python 3.10+** installed.
+
+### 1. Database Setup
+The system uses PostgreSQL. Configurations are managed in `wealthix-api/src/main/resources/application-dev.yml`.
+
+### 2. Launch Backend API
+```bash
+cd wealthix-api
 ./mvnw clean install
 ./mvnw spring-boot:run
 ```
-*(Runs on `http://localhost:8080`)*
+*API runs on `http://localhost:8080`*
 
-### 3. Run AI Service (`wealthix-ai`)
-```
-cd financial-intelligence-ai
+### 3. Launch AI Service
+```bash
+cd financial-ai-service
 pip install -r requirements.txt
-uvicorn main:app --reload --port 8000
+uvicorn app.main:app --host 0.0.0.1 --port 8000
 ```
-*(Runs on `http://localhost:8000`)*
+*AI service runs on `http://localhost:8000`*
 
-### 4. Run Frontend (`wealthix-ui`)
-```
-cd antigravity-ui
+### 4. Launch Frontend
+```bash
+cd wealthix-ui
 npm install
 npm run dev
 ```
-*(Runs on `http://localhost:3000`)*
+*UI runs on `http://localhost:3000`*
 
-## Features
+---
 
-- **Plaid Sync Engine**: Links your bank cleanly fetching transactions reliably parsing Webhook payload events properly natively.
-- **AI Agent (Gemini)**: Detects hidden anomalies mathematically. Scores fraud on normalized heuristics. Forecasts dynamic month-over-month variances automatically.
-- **Gamification Mechanics**: XP bounds mapping linearly awarding dynamic prestige Tiers (`SILVER`, `GOLD`... `DIAMOND`) utilizing realtime Websockets (`SockJS`).
-- **Comprehensive PDF / CSV Exports**: Render beautifully organized structured transactional reports mapping dynamically generated Apache Commons data configurations intuitively out to end users securely.
+## 🔒 Security Baseline
 
-## Test Harness
+- **Bank-Grade Encryption**: Sensitive Plaid tokens are stored using **AES-256-GCM** encryption.
+- **Isolated AI Context**: No PII (emails, names) is ever transmitted to the LLM. Only masked transaction metadata is used for analysis.
+- **Stateless Auth**: Secured via HTTP-only JWT cookies with CSRF protection and 2FA support.
 
-Run backend JUnit isolation suites automatically via Maven seamlessly ensuring core runtime logic holds true:
-```
-./mvnw test
-```
+---
 
-## IDE Tooling Used
+## 🏆 Gamification & Levels
+Wealthix turns financial management into a game. Earn XP for staying under budget, identifying fraudulent transactions, and hitting savings goals. Progress through tiers from **Bronze** to **Diamond**.
 
-Developed seamlessly by the Antigravity Agent utilizing modern continuous automated generation iterations. All environments dynamically verified end to end seamlessly utilizing live container bindings properly natively.
+---
+
+## 📋 License
+Developed by the **Antigravity AI Agent** for the Financial Freedom Initiative. Built for transparency, speed, and intelligence.
