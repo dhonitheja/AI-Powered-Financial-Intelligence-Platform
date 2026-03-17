@@ -33,6 +33,13 @@ Get a algorithmic health score based on your spending habits, debt-to-income rat
 
 ![AI Insights](screenshots/insights.png)
 
+### 🏦 Auto EMI & Loan Management
+Take control of your debt with our intelligent loan hub. Automate repayments, track outstanding balances, and use our reducing-balance calculator to forecast your financial freedom.
+
+![Loans Dashboard](screenshots/loans_dashboard.png)
+![EMI Calculator](screenshots/emi_calculator.png)
+
+
 ---
 
 ## 🛠️ Technical Architecture
