@@ -4,7 +4,7 @@ services:
 
   wealthix-api:
     build:
-      context: ./financial-intelligence-api
+      context: ./wealthix-api
       dockerfile: Dockerfile
     container_name: wealthix-api
     restart: unless-stopped
@@ -57,7 +57,7 @@ services:
 
   wealthix-ui:
     build:
-      context: ./antigravity-ui
+      context: ./wealthix-ui
       dockerfile: Dockerfile
     container_name: wealthix-ui
     restart: unless-stopped

@@ -3,7 +3,7 @@ from fastapi import Request, HTTPException, status
 from dotenv import load_dotenv
 
 load_dotenv()
-INTERNAL_SECRET = os.getenv("INTERNAL_SERVICE_SECRET")
+INTERNAL_SECRET = os.getenv("INTERNAL_AI_SERVICE_SECRET")
 
 async def verify_internal_secret(request: Request):
     """
