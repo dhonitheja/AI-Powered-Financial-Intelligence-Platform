@@ -9,8 +9,9 @@ class Settings(BaseSettings):
 
     # Service-to-service shared secret: Spring Boot -> AI Service
     # Must be set in both services' environment variables
-    autopay_internal_secret: Optional[str] = None
+    internal_ai_service_secret: Optional[str] = None
 
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding='utf-8')
+    model_config = SettingsConfigDict(env_file=".env", env_file_encoding='utf-8', extra='ignore')
 
 settings = Settings()
+print(f"DEBUG: Loaded GEMINI_API_KEY: {settings.gemini_api_key[:8]}..." if settings.gemini_api_key else "DEBUG: GEMINI_API_KEY IS NONE")

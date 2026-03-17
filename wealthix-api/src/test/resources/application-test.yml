@@ -1,0 +1,66 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+  h2:
+    console:
+      enabled: false
+  mail:
+    host: localhost
+    port: 3025
+
+encryption:
+  key: dGVzdGtleXRlc3RrZXl0ZXN0a2V5dGVzdGtleQ==
+
+jwt:
+  secret: testSecretKeyForJwtTokenGenerationThatIsLongEnough
+  expiration: 86400000
+
+plaid:
+  client-id: test-client-id
+  secret: test-secret
+  env: sandbox
+  products: transactions,auth
+  country-codes: US
+  webhook-url:
+
+stripe:
+  secret-key: sk_test_fake
+  publishable-key: pk_test_fake
+  webhook-secret: whsec_test_fake
+
+wealthix:
+  ai:
+    service:
+      url: http://localhost:9999
+      secret: test-secret
+
+autopay:
+  reminder:
+    cron: "0 0 8 * * ?"
+  plaid-verification:
+    cron: "0 0 2 * * ?"
+  review-threshold-days: 5
+
+resilience4j:
+  ratelimiter:
+    instances:
+      stripe-write:
+        limit-for-period: 100
+        limit-refresh-period: 60s
+        timeout-duration: 0s
+      ai-chat:
+        limit-for-period: 100
+        limit-refresh-period: 60s
+        timeout-duration: 0s
+      autopay-write:
+        limit-for-period: 100
+        limit-refresh-period: 60s
+        timeout-duration: 0s

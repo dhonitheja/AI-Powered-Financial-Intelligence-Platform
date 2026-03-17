@@ -1,0 +1,13 @@
+Manifest-Version: 1.0
+Implementation-Title: com.plaid:plaid-java
+Implementation-Version: 39.4.0
+Archiver-Version: Plexus Archiver
+Built-By: root
+Specification-Vendor: Plaid Inc.
+Specification-Title: com.plaid:plaid-java
+Implementation-Vendor-Id: com.plaid
+Created-By: Apache Maven 3.6.3
+Build-Jdk: 1.8.0_282
+Specification-Version: 39.4.0
+Implementation-Vendor: Plaid Inc.
+

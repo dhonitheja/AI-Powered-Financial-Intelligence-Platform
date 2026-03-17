@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+  <springProfile name="prod">
+    <appender name="JSON_CONSOLE"
+        class="ch.qos.logback.core.ConsoleAppender">
+      <encoder
+          class="net.logstash.logback.encoder.LogstashEncoder">
+        <customFields>
+          {"service":"wealthix-api","env":"production"}
+        </customFields>
+        <!-- Mask sensitive patterns before logging -->
+        <fieldNames>
+          <timestamp>timestamp</timestamp>
+          <message>message</message>
+          <level>level</level>
+        </fieldNames>
+      </encoder>
+    </appender>
+    <root level="INFO">
+      <appender-ref ref="JSON_CONSOLE" />
+    </root>
+    <!-- Silence noisy libs in prod -->
+    <logger name="org.hibernate.SQL" level="WARN"/>
+    <logger name="com.stripe" level="WARN"/>
+  </springProfile>
+
+  <springProfile name="dev,test,default">
+    <appender name="CONSOLE"
+        class="ch.qos.logback.core.ConsoleAppender">
+      <encoder>
+        <pattern>
+          %d{HH:mm:ss} %-5level [%thread] %logger{36} - %msg%n
+        </pattern>
+      </encoder>
+    </appender>
+    <root level="INFO">
+      <appender-ref ref="CONSOLE" />
+    </root>
+  </springProfile>
+</configuration>

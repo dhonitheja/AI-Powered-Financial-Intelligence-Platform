@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Monthly Financial Summary</title>
+</head>
+
+<body style="font-family: Arial, sans-serif; background-color: #f8fafc; margin: 0; padding: 20px;">
+    <div
+        style="max-width: 600px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; border-left: 5px solid #10b981; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+        <h2 style="color: #059669;" th:text="${title}">AI Monthly Summary</h2>
+        <p style="color: #334155;">Here is your AI-powered financial summary for the previous month:</p>
+
+        <div style="background-color: #ecfdf5; padding: 15px; border-radius: 6px; margin: 20px 0;">
+            <div th:utext="${summaryContent}">
+                <!-- Monthly summary content will be injected here -->
+            </div>
+        </div>
+
+        <p style="font-size: 14px; color: #64748b;">Keep up the good habits. Check your dashboard for more details.</p>
+    </div>
+</body>
+
+</html>

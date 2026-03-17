@@ -1,9 +1,9 @@
-import os
 import google.generativeai as genai
 from typing import Optional
+from app.config.settings import settings
 
-genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
-model = genai.GenerativeModel("gemini-2.5-flash")
+genai.configure(api_key=settings.gemini_api_key)
+model = genai.GenerativeModel(settings.model_name)
 
 async def call_gemini(prompt: str) -> Optional[str]:
     """
@@ -16,8 +16,7 @@ async def call_gemini(prompt: str) -> Optional[str]:
         response = model.generate_content(prompt)
         return response.text
     except Exception as e:
-        # Log generic failure — no sensitive data
-        print(f"[wealthix-ai] Gemini call failed: {type(e).__name__}")
+        print(f"[wealthix-ai] Gemini call failed: {str(e)}")
         return None
 
 async def categorize_payment(description: str) -> dict:

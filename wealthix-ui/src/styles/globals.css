@@ -1,0 +1,159 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 240 20% 4%;
+    --foreground: 210 40% 98%;
+    --radius: 1.25rem;
+    
+    /* Premium Palette - Obsidian & Aurora */
+    --accent-blue: 217 91% 60%;
+    --accent-purple: 262 83% 58%;
+    --accent-gold: 45 61% 52%;
+    
+    --sidebar-width: 280px;
+  }
+
+  .dark {
+    --background: 240 20% 4%;
+    --foreground: 210 40% 98%;
+  }
+
+  * {
+    @apply border-white/10;
+  }
+
+  body {
+    @apply bg-[#060608] text-slate-100 antialiased overflow-x-hidden;
+    font-feature-settings: "rlig" 1, "calt" 1;
+    background: radial-gradient(circle at 50% -20%, #1e1b4b 0%, #060608 60%);
+  }
+}
+
+@layer components {
+  /* ── Glassmorphism Obsidian */
+  .glass-obsidian {
+    @apply bg-white/[0.03] backdrop-blur-[24px] border border-white/[0.08] shadow-2xl;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.01) 100%);
+  }
+
+  /* ── Fluid Motion Container */
+  .fluid-container {
+    @apply relative overflow-hidden transition-all duration-700 ease-out;
+  }
+
+  /* ── Premium Sidebar */
+  .premium-sidebar {
+    @apply h-screen bg-black/40 backdrop-blur-3xl border-r border-white/5 transition-all duration-300;
+    background: linear-gradient(180deg, rgba(13, 11, 30, 0.8) 0%, rgba(6, 6, 8, 0.95) 100%);
+  }
+
+  /* ── Sidebar Link Gradient */
+  .sidebar-link-active {
+    @apply bg-white/10 text-white rounded-xl;
+    background: linear-gradient(90deg, rgba(59, 130, 246, 0.2) 0%, rgba(147, 51, 234, 0.1) 100%);
+    box-shadow: inset 0 0 10px rgba(59, 130, 246, 0.1);
+  }
+
+  /* ── Financial Heatmap Cell */
+  .heatmap-cell {
+    @apply rounded-md transition-all duration-300 hover:scale-110 cursor-pointer;
+  }
+
+  /* ── Pulse Animation for AutoPay */
+  .pulse-active {
+    position: relative;
+  }
+  .pulse-active::after {
+    content: '';
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    width: 12px;
+    height: 12px;
+    @apply bg-green-500 rounded-full border-2 border-[#060608];
+    animation: pulse-ring 2s cubic-bezier(0.455, 0.03, 0.515, 0.955) infinite;
+  }
+}
+
+/* ── Keyframes ── */
+
+@keyframes pulse-ring {
+  0% { transform: scale(0.33); opacity: 0; }
+  80%, 100% { transform: scale(1.5); opacity: 0; }
+}
+
+@keyframes fluid-float {
+  0% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-15px) rotate(1deg); }
+  100% { transform: translateY(0px) rotate(0deg); }
+}
+
+.animate-fluid {
+  animation: fluid-float 12s ease-in-out infinite;
+}
+
+/* ── Custom Scrollbar Obsidian */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+::-webkit-scrollbar-thumb {
+  @apply bg-white/10 rounded-full hover:bg-white/20 transition-colors;
+}
+
+/* ── Mesh Background Patterns ── */
+.mesh-glow {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  background: 
+    radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.1) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, rgba(147, 51, 234, 0.1) 0px, transparent 50%),
+    radial-gradient(at 50% 50%, rgba(212, 175, 55, 0.02) 0px, transparent 50%);
+  filter: blur(80px);
+}
+
+.glow-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.glow-card::before {
+  content: "";
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle at center, rgba(59, 130, 246, 0.05) 0%, transparent 50%);
+  transition: transform 0.6s ease-out;
+  pointer-events: none;
+}
+
+.glow-card:hover::before {
+  transform: translate(10%, 10%);
+}
+
+.text-gradient-gold {
+  background: linear-gradient(to right, #D4AF37, #F5E6AB, #B8962E);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.premium-border {
+  @apply relative;
+}
+
+.premium-border::after {
+  content: "";
+  @apply absolute inset-0 rounded-[inherit] p-[1px] -z-10 bg-gradient-to-br from-white/10 to-transparent pointer-events-none;
+}

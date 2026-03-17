@@ -37,10 +37,12 @@ handler = logging.StreamHandler(sys.stdout)
 handler.setFormatter(WealthixJsonFormatter())
 logging.basicConfig(level=logging.INFO, handlers=[handler])
 
+from app.config.settings import settings
+
 # Initialize Gemini once at startup — not per request
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
+    genai.configure(api_key=settings.gemini_api_key)
     logging.info("Gemini initialized")
     yield
     logging.info("Shutting down")

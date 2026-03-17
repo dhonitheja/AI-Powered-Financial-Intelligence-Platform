@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>High Risk Transaction Alert</title>
+</head>
+<body style="font-family: Arial, sans-serif; background-color: #f8fafc; margin: 0; padding: 20px;">
+    <div style="max-width: 600px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+        <h2 style="color: #ef4444;" th:text="${title}">Security Alert</h2>
+        <p style="color: #334155;">We detected a potential high-risk transaction on your account.</p>
+        <div style="background-color: #fee2e2; padding: 15px; border-radius: 6px; margin: 20px 0;">
+            <p><strong>Merchant:</strong> <span th:text="${transactionName}">Merchant Name</span></p>
+            <p><strong>Amount:</strong> $<span th:text="${amount}">0.00</span></p>
+            <p><strong>Flag Reason:</strong> <span th:text="${reason}">Unusual pattern</span></p>
+        </div>
+        <p style="font-size: 14px; color: #64748b;">If you did not authorize this payment, please review your account immediately.</p>
+    </div>
+</body>
+</html>
