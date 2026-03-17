@@ -7,7 +7,7 @@ Wealthix is a high-performance, next-generation financial intelligence platform 
 ### 🎬 Product Tour
 Experience the intelligence in action.
 
-![Wealthix Product Tour](screenshots/product_tour.webp)
+![Wealthix Product Tour](screenshots/wealthix_demo.webp)
 
 ---
 
