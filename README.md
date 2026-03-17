@@ -4,6 +4,11 @@
 
 Wealthix is a high-performance, next-generation financial intelligence platform that merges traditional banking with generative AI. It empowers users to synthesize their financial footprint, interact with advanced AI-driven analytics, and uncover wealth-building insights through a premium, quantum-intelligent interface.
 
+### 🎬 Product Tour
+Experience the intelligence in action.
+
+![Wealthix Product Tour](screenshots/product_tour.webp)
+
 ---
 
 ## ✨ Features Showcase
