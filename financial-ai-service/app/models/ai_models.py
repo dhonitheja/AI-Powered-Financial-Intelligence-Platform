@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import List, Optional, Dict
+from typing import List, Optional, Dict, Any
 
 class ChatMessage(BaseModel):
     role: str = Field(pattern="^(user|assistant)$")
@@ -22,6 +22,7 @@ class ChatResponse(BaseModel):
     reply: str
     session_id: str
     suggested_actions: List[str] = []
+    metrics: Optional[Dict[str, Any]] = None
 
 class AnomalyRequest(BaseModel):
     """Anonymized schedule data for anomaly detection."""

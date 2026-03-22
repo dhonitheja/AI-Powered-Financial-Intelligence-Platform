@@ -1,0 +1,83 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] ---------------------< com.wealthix:wealthix-api >----------------------
+[INFO] Building wealthix-api 0.1.0-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- clean:3.3.2:clean (default-clean) @ wealthix-api ---
+[INFO] Deleting D:\Ideas\AI-Powered Financial Intelligence Platform\wealthix-api\target
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ wealthix-api ---
+[INFO] Copying 2 resources from src\main\resources to target\classes
+[INFO] Copying 12 resources from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.11.0:compile (default-compile) @ wealthix-api ---
+[INFO] Changes detected - recompiling the module! :source
+[INFO] Compiling 161 source files with javac [debug release 17] to target\classes
+[INFO] /D:/Ideas/AI-Powered Financial Intelligence Platform/wealthix-api/src/main/java/com/wealthix/service/BulkImportService.java: D:\Ideas\AI-Powered Financial Intelligence Platform\wealthix-api\src\main\java\com\wealthix\service\BulkImportService.java uses or overrides a deprecated API.
+[INFO] /D:/Ideas/AI-Powered Financial Intelligence Platform/wealthix-api/src/main/java/com/wealthix/service/BulkImportService.java: Recompile with -Xlint:deprecation for details.
+[INFO] Some messages have been simplified; recompile with -Xdiags:verbose to get full output
+[INFO] -------------------------------------------------------------
+[WARNING] COMPILATION WARNING : 
+[INFO] -------------------------------------------------------------
+[WARNING] /D:/Ideas/AI-Powered Financial Intelligence Platform/wealthix-api/src/main/java/com/wealthix/entity/ApiKey.java:[32,21] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+[WARNING] /D:/Ideas/AI-Powered Financial Intelligence Platform/wealthix-api/src/main/java/com/wealthix/entity/ApiKey.java:[35,21] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+[WARNING] /D:/Ideas/AI-Powered Financial Intelligence Platform/wealthix-api/src/main/java/com/wealthix/entity/Transaction.java:[52,20] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+[WARNING] /D:/Ideas/AI-Powered Financial Intelligence Platform/wealthix-api/src/main/java/com/wealthix/entity/Transaction.java:[55,21] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+[WARNING] /D:/Ideas/AI-Powered Financial Intelligence Platform/wealthix-api/src/main/java/com/wealthix/entity/Transaction.java:[58,21] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+[WARNING] /D:/Ideas/AI-Powered Financial Intelligence Platform/wealthix-api/src/main/java/com/wealthix/entity/ApiKey.java:[16,1] Generating equals/hashCode implementation but without a call to superclass, even though this class does not extend java.lang.Object. If this is intentional, add '@EqualsAndHashCode(callSuper=false)' to your type.
+[WARNING] /D:/Ideas/AI-Powered Financial Intelligence Platform/wealthix-api/src/main/java/com/wealthix/entity/Transaction.java:[15,1] Generating equals/hashCode implementation but without a call to superclass, even though this class does not extend java.lang.Object. If this is intentional, add '@EqualsAndHashCode(callSuper=false)' to your type.
+[INFO] 7 warnings 
+[INFO] -------------------------------------------------------------
+[INFO] -------------------------------------------------------------
+[ERROR] COMPILATION ERROR : 
+[INFO] -------------------------------------------------------------
+[ERROR] /D:/Ideas/AI-Powered Financial Intelligence Platform/wealthix-api/src/main/java/com/wealthix/plaid/service/PlaidService.java:[368,47] cannot find symbol
+  symbol:   method getAccessToken()
+  location: class com.wealthix.entity.UserBankConnection
+[ERROR] /D:/Ideas/AI-Powered Financial Intelligence Platform/wealthix-api/src/main/java/com/wealthix/autopay/service/StripePaymentService.java:[107,48] incompatible types: java.lang.String cannot be converted to java.util.UUID
+[ERROR] /D:/Ideas/AI-Powered Financial Intelligence Platform/wealthix-api/src/main/java/com/wealthix/autopay/service/StripePaymentService.java:[174,48] incompatible types: java.lang.String cannot be converted to java.util.UUID
+[ERROR] /D:/Ideas/AI-Powered Financial Intelligence Platform/wealthix-api/src/main/java/com/wealthix/autopay/service/StripePaymentService.java:[211,48] incompatible types: java.lang.String cannot be converted to java.util.UUID
+[ERROR] /D:/Ideas/AI-Powered Financial Intelligence Platform/wealthix-api/src/main/java/com/wealthix/autopay/service/StripePaymentService.java:[239,48] incompatible types: java.lang.String cannot be converted to java.util.UUID
+[ERROR] /D:/Ideas/AI-Powered Financial Intelligence Platform/wealthix-api/src/main/java/com/wealthix/autopay/service/StripePaymentService.java:[279,63] incompatible types: java.lang.String cannot be converted to java.util.UUID
+[ERROR] /D:/Ideas/AI-Powered Financial Intelligence Platform/wealthix-api/src/main/java/com/wealthix/notification/service/NotificationService.java:[85,66] incompatible types: java.lang.String cannot be converted to java.util.UUID
+[ERROR] /D:/Ideas/AI-Powered Financial Intelligence Platform/wealthix-api/src/main/java/com/wealthix/notification/service/NotificationService.java:[92,66] incompatible types: java.lang.String cannot be converted to java.util.UUID
+[ERROR] /D:/Ideas/AI-Powered Financial Intelligence Platform/wealthix-api/src/main/java/com/wealthix/budget/service/BudgetEnforcementService.java:[73,42] method calculateSpendingByCategoryBetween in interface com.wealthix.repository.TransactionRepository cannot be applied to given types;
+  required: java.util.UUID,java.time.LocalDate,java.time.LocalDate
+  found:    java.time.LocalDate,java.time.LocalDate
+  reason: actual and formal argument lists differ in length
+[ERROR] /D:/Ideas/AI-Powered Financial Intelligence Platform/wealthix-api/src/main/java/com/wealthix/export/controller/ExportController.java:[34,54] incompatible types: java.lang.String cannot be converted to java.util.UUID
+[ERROR] /D:/Ideas/AI-Powered Financial Intelligence Platform/wealthix-api/src/main/java/com/wealthix/service/BankSyncService.java:[84,71] incompatible types: java.lang.String cannot be converted to java.util.UUID
+[INFO] 11 errors 
+[INFO] -------------------------------------------------------------
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD FAILURE
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  10.415 s
+[INFO] Finished at: 2026-03-21T22:11:36-05:00
+[INFO] ------------------------------------------------------------------------
+[ERROR] Failed to execute goal org.apache.maven.plugins:maven-compiler-plugin:3.11.0:compile (default-compile) on project wealthix-api: Compilation failure: Compilation failure: 
+[ERROR] /D:/Ideas/AI-Powered Financial Intelligence Platform/wealthix-api/src/main/java/com/wealthix/plaid/service/PlaidService.java:[368,47] cannot find symbol
+[ERROR]   symbol:   method getAccessToken()
+[ERROR]   location: class com.wealthix.entity.UserBankConnection
+[ERROR] /D:/Ideas/AI-Powered Financial Intelligence Platform/wealthix-api/src/main/java/com/wealthix/autopay/service/StripePaymentService.java:[107,48] incompatible types: java.lang.String cannot be converted to java.util.UUID
+[ERROR] /D:/Ideas/AI-Powered Financial Intelligence Platform/wealthix-api/src/main/java/com/wealthix/autopay/service/StripePaymentService.java:[174,48] incompatible types: java.lang.String cannot be converted to java.util.UUID
+[ERROR] /D:/Ideas/AI-Powered Financial Intelligence Platform/wealthix-api/src/main/java/com/wealthix/autopay/service/StripePaymentService.java:[211,48] incompatible types: java.lang.String cannot be converted to java.util.UUID
+[ERROR] /D:/Ideas/AI-Powered Financial Intelligence Platform/wealthix-api/src/main/java/com/wealthix/autopay/service/StripePaymentService.java:[239,48] incompatible types: java.lang.String cannot be converted to java.util.UUID
+[ERROR] /D:/Ideas/AI-Powered Financial Intelligence Platform/wealthix-api/src/main/java/com/wealthix/autopay/service/StripePaymentService.java:[279,63] incompatible types: java.lang.String cannot be converted to java.util.UUID
+[ERROR] /D:/Ideas/AI-Powered Financial Intelligence Platform/wealthix-api/src/main/java/com/wealthix/notification/service/NotificationService.java:[85,66] incompatible types: java.lang.String cannot be converted to java.util.UUID
+[ERROR] /D:/Ideas/AI-Powered Financial Intelligence Platform/wealthix-api/src/main/java/com/wealthix/notification/service/NotificationService.java:[92,66] incompatible types: java.lang.String cannot be converted to java.util.UUID
+[ERROR] /D:/Ideas/AI-Powered Financial Intelligence Platform/wealthix-api/src/main/java/com/wealthix/budget/service/BudgetEnforcementService.java:[73,42] method calculateSpendingByCategoryBetween in interface com.wealthix.repository.TransactionRepository cannot be applied to given types;
+[ERROR]   required: java.util.UUID,java.time.LocalDate,java.time.LocalDate
+[ERROR]   found:    java.time.LocalDate,java.time.LocalDate
+[ERROR]   reason: actual and formal argument lists differ in length
+[ERROR] /D:/Ideas/AI-Powered Financial Intelligence Platform/wealthix-api/src/main/java/com/wealthix/export/controller/ExportController.java:[34,54] incompatible types: java.lang.String cannot be converted to java.util.UUID
+[ERROR] /D:/Ideas/AI-Powered Financial Intelligence Platform/wealthix-api/src/main/java/com/wealthix/service/BankSyncService.java:[84,71] incompatible types: java.lang.String cannot be converted to java.util.UUID
+[ERROR] -> [Help 1]
+[ERROR] 
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR] 
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoFailureException

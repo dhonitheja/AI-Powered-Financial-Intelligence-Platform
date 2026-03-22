@@ -3,7 +3,7 @@ from typing import Optional
 
 class Settings(BaseSettings):
     gemini_api_key: Optional[str] = None
-    model_name: str = "gemini-flash-latest"
+    model_name: str = "gemini-1.5-flash"
     
     log_level: str = "info"
 

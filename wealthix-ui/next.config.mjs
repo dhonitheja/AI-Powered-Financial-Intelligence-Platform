@@ -15,10 +15,11 @@ const nextConfig = {
             key: "Content-Security-Policy",
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-eval' 'unsafe-inline'",
+              "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://cdn.plaid.com",
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: https:",
-              "connect-src 'self' https://api.wealthix.app http://localhost:8080 ws://localhost:8080",
+              "connect-src 'self' https://api.wealthix.app http://localhost:8080 ws://localhost:8080 https://*.plaid.com",
+              "frame-src https://*.plaid.com",
               "frame-ancestors 'none'",
             ].join("; ")
           },

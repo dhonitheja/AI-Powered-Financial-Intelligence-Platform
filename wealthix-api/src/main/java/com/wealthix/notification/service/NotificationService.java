@@ -82,14 +82,14 @@ public class NotificationService {
     }
 
     public void notifyPaymentSuccess(UUID userId, String message) {
-        AppUser user = appUserRepository.findById(userId.toString()).orElse(null);
+        AppUser user = appUserRepository.findById(userId).orElse(null);
         if (user != null) {
             sendNotification(user.getEmail(), message, NotificationType.SUCCESS);
         }
     }
 
     public void notifyPaymentFailed(UUID userId, String message, String failureReason) {
-        AppUser user = appUserRepository.findById(userId.toString()).orElse(null);
+        AppUser user = appUserRepository.findById(userId).orElse(null);
         if (user != null) {
             sendNotification(user.getEmail(), message + ". Reason: " + failureReason, NotificationType.ALERT);
         }

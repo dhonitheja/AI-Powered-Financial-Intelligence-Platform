@@ -15,6 +15,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * AIChatController — provides the /api/ai/chat endpoint.
@@ -115,9 +117,8 @@ public class AIChatController {
             ctx.append("ACCOUNT SUMMARY: Not available\n\n");
         }
 
-        // Monthly spending by category
         try {
-            List<CategorySpendingDTO> monthly = transactionService.getFinancialSummary("monthly", null);
+            List<CategorySpendingDTO> monthly = transactionService.getFinancialSummary(UUID.fromString(userId), "monthly", null);
             if (!monthly.isEmpty()) {
                 ctx.append("MONTHLY SPENDING BY CATEGORY:\n");
                 monthly.forEach(
@@ -130,7 +131,7 @@ public class AIChatController {
 
         // 6-month trends
         try {
-            List<CategorySpendingDTO> sixMonths = transactionService.getFinancialSummary("6months", null);
+            List<CategorySpendingDTO> sixMonths = transactionService.getFinancialSummary(UUID.fromString(userId), "6months", null);
             if (!sixMonths.isEmpty()) {
                 double totalSixMonth = sixMonths.stream().mapToDouble(CategorySpendingDTO::getTotalSpending).sum();
                 ctx.append(String.format("6-MONTH TOTAL SPENDING: $%.2f\n", Math.abs(totalSixMonth)));

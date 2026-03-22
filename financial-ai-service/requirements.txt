@@ -5,4 +5,15 @@ pydantic-settings
 httpx
 python-json-logger
 google-generativeai
+google-cloud-aiplatform
+google-cloud-logging
+anthropic[vertex]
 python-dotenv
+langchain-google-genai
+langchain
+langchain-community
+faiss-cpu
+numpy
+pandas
+pytest
+pytest-asyncio

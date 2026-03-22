@@ -81,7 +81,7 @@ public class BankSyncService {
 
         private void triggerBudgetCheck(String userId) {
                 try {
-                        String userEmail = appUserRepository.findById(userId)
+                        String userEmail = appUserRepository.findById(UUID.fromString(userId))
                                 .map(u -> u.getEmail())
                                 .orElse(null);
                         if (userEmail != null) {
@@ -101,7 +101,8 @@ public class BankSyncService {
          * without needing to expose userId on the client.
          */
         public SyncStatusDTO getSyncStatus(String userId) {
-                List<UserBankConnection> connections = connectionRepository.findByUserId(UUID.fromString(userId));
+                List<UserBankConnection> connections = connectionRepository.findByUserId(UUID.fromString(userId))
+                                .stream().filter(UserBankConnection::isActive).toList();
                 int accountCount = connections.size();
                 long lastUpdatedEpoch = connections.stream()
                                 .mapToLong(c -> c.getUpdatedAt() != null

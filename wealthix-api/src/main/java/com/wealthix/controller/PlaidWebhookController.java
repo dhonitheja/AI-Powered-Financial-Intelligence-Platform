@@ -21,7 +21,7 @@ import java.util.Map;
  * - Event processing is fully async (non-blocking response to Plaid).
  */
 @RestController
-@RequestMapping("/api/webhooks")
+@RequestMapping("/api")
 public class PlaidWebhookController {
 
     private static final Logger log = LoggerFactory.getLogger(PlaidWebhookController.class);
@@ -38,7 +38,7 @@ public class PlaidWebhookController {
      * Reads the raw body as a string (required for HMAC verification),
      * validates the signature, then dispatches async processing.
      */
-    @PostMapping(value = "/plaid", consumes = "application/json")
+    @PostMapping(value = {"/plaid/webhook", "/webhooks/plaid"}, consumes = "application/json")
     public ResponseEntity<Map<String, String>> handlePlaidWebhook(
             HttpServletRequest request,
             @RequestBody Map<String, Object> payload) {

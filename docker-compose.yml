@@ -32,7 +32,6 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 60s
     networks:
       - wealthix-internal
 
@@ -44,14 +43,13 @@ services:
     restart: unless-stopped
     ports:
       - "8000:8000"
+    volumes:
+      # Map local gcloud credentials for Vertex AI SDK authentication
+      - ~/.config/gcloud:/home/wealthix/.config/gcloud
     environment:
       - INTERNAL_SERVICE_SECRET=${INTERNAL_AI_SERVICE_SECRET}
       - GOOGLE_API_KEY=${GOOGLE_API_KEY}
-    healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:8000/health" ]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+      - GOOGLE_CLOUD_PROJECT=wealthix-pro
     networks:
       - wealthix-internal
 

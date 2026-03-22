@@ -22,13 +22,21 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/v1/plaid")
-@RequiredArgsConstructor
 @PreAuthorize("isAuthenticated()")
 public class PlaidController {
 
   private final PlaidService plaidService;
   private final com.wealthix.service.BankSyncService bankSyncService;
   private final AuditLogService auditLogService;
+
+  public PlaidController(
+      PlaidService plaidService,
+      com.wealthix.service.BankSyncService bankSyncService,
+      AuditLogService auditLogService) {
+    this.plaidService = plaidService;
+    this.bankSyncService = bankSyncService;
+    this.auditLogService = auditLogService;
+  }
 
   /**
    * Step 1: Frontend calls this to get link_token
@@ -61,10 +69,7 @@ public class PlaidController {
       HttpServletRequest request) {
 
     List<UserBankConnectionResponse> connections =
-        plaidService.exchangePublicToken(req.getPublicToken(), user.getId())
-        .stream()
-        .map(UserBankConnectionResponse::fromEntity)
-        .collect(Collectors.toList());
+        plaidService.exchangePublicToken(req.getPublicToken(), user.getId());
 
     auditLogService.log(
         UUID.fromString(user.getId()),
@@ -99,8 +104,11 @@ public class PlaidController {
   @GetMapping("/connections")
   public ResponseEntity<ApiResponse<?>> getConnections(
       @AuthenticationPrincipal com.wealthix.security.UserDetailsImpl user) {
-    return ResponseEntity.ok(
-        ApiResponse.success(plaidService.getConnections(user.getId())));
+    List<UserBankConnectionResponse> connections = plaidService.getConnections(user.getId())
+        .stream()
+        .map(UserBankConnectionResponse::fromEntity)
+        .collect(Collectors.toList());
+    return ResponseEntity.ok(ApiResponse.success(connections));
   }
 
   /**
@@ -126,25 +134,37 @@ public class PlaidController {
   /**
    * Disconnect a bank account
    */
-  @DeleteMapping("/connections/{connectionId}")
-  public ResponseEntity<ApiResponse<String>> disconnectBank(
-      @PathVariable UUID connectionId,
-      @AuthenticationPrincipal com.wealthix.security.UserDetailsImpl user,
-      HttpServletRequest request) {
+    @DeleteMapping("/connections/{connectionId}")
+    public ResponseEntity<ApiResponse<String>> disconnectBank(
+        @PathVariable UUID connectionId,
+        @AuthenticationPrincipal com.wealthix.security.UserDetailsImpl user,
+        HttpServletRequest request) {
 
-    plaidService.disconnectBank(connectionId, user.getId());
+      plaidService.disconnectBank(connectionId, user.getId());
 
-    auditLogService.log(
-        UUID.fromString(user.getId()),
-        AuditAction.PLAID_BANK_DISCONNECTED,
-        "BANK_CONNECTION", connectionId, request);
+      auditLogService.log(
+          UUID.fromString(user.getId()),
+          AuditAction.PLAID_BANK_DISCONNECTED,
+          "BANK_CONNECTION", connectionId, request);
 
-    return ResponseEntity.ok(ApiResponse.success("Bank account disconnected"));
-  }
+      return ResponseEntity.ok(ApiResponse.success("Bank account disconnected"));
+    }
 
-  public ResponseEntity<ApiResponse<?>> rateLimitFallback(
-      com.wealthix.security.UserDetailsImpl user, HttpServletRequest request, Throwable t) {
-      return ResponseEntity.status(429).body(
-          ApiResponse.error("Slow down! Please wait a minute before trying again."));
-  }
+    /**
+     * Internal endpoint for AI Service to fetch transactions for RAG.
+     * In a production app, this would be highly secured with internal API keys.
+     */
+    @GetMapping("/sandbox-transactions")
+    public ResponseEntity<ApiResponse<List<com.wealthix.ai.model.dto.AITransactionDTO>>> getSandboxTransactions(
+        @AuthenticationPrincipal com.wealthix.security.UserDetailsImpl user) {
+        
+        List<com.wealthix.ai.model.dto.AITransactionDTO> transactions = plaidService.getTransactionsForAI(user.getId());
+        return ResponseEntity.ok(ApiResponse.success(transactions));
+    }
+
+    public ResponseEntity<ApiResponse<?>> rateLimitFallback(
+        com.wealthix.security.UserDetailsImpl user, HttpServletRequest request, Throwable t) {
+        return ResponseEntity.status(429).body(
+            ApiResponse.error("Slow down! Please wait a minute before trying again."));
+    }
 }

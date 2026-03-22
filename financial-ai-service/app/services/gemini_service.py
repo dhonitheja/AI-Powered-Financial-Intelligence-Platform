@@ -1,28 +1,33 @@
-import google.generativeai as genai
 from typing import Optional
-from app.config.settings import settings
+import vertexai
+from vertexai.generative_models import GenerativeModel, GenerationConfig
+import json
+import logging
 
-genai.configure(api_key=settings.gemini_api_key)
-model = genai.GenerativeModel(settings.model_name)
+logger = logging.getLogger(__name__)
+
+# Vertex AI is initialized in main.py lifespan
+# We use a lazy model accessor or just initialize here if needed, 
+# but for service consistency, we assume vertexai.init() is called.
+
+def get_model():
+    return GenerativeModel("gemini-1.5-flash")
 
 async def call_gemini(prompt: str) -> Optional[str]:
     """
-    Wrapper around Gemini API.
-    Always wrap in try/except.
-    AI failure must NEVER break business logic.
-    NEVER include PII or account numbers in prompts.
+    Wrapper around Vertex AI Gemini 1.5 Flash.
     """
     try:
+        model = get_model()
         response = model.generate_content(prompt)
         return response.text
     except Exception as e:
-        print(f"[wealthix-ai] Gemini call failed: {str(e)}")
+        logger.error(f"[wealthix-ai] Vertex Gemini call failed: {str(e)}")
         return None
 
 async def categorize_payment(description: str) -> dict:
     """
-    Categorize a payment description using Gemini.
-    Input: anonymized description string only.
+    Categorize a payment description using Vertex Gemini.
     """
     prompt = f"""
     You are a financial categorization engine for Wealthix.
@@ -39,25 +44,25 @@ async def categorize_payment(description: str) -> dict:
     {{"category": "CATEGORY_NAME", "confidence": 0.95}}
     No explanation. No markdown. JSON only.
     """
-    result = await call_gemini(prompt)
-    if not result:
-        return {"category": "CUSTOM", "confidence": 0.5}
+    # Use GenerationConfig for strict JSON
     try:
-        import json
-        cleaned = result.strip().replace("```json", "").replace("```", "")
-        return json.loads(cleaned)
-    except Exception:
+        model = get_model()
+        response = model.generate_content(
+            prompt, 
+            generation_config=GenerationConfig(response_mime_type="application/json")
+        )
+        return json.loads(response.text)
+    except Exception as e:
+        logger.warn(f"Categorization failed: {e}")
         return {"category": "CUSTOM", "confidence": 0.5}
 
 async def generate_insights(schedules_summary: str) -> dict:
     """
     Generate financial insights from anonymized schedule data.
-    Input: summary string with amounts + categories ONLY.
     """
     prompt = f"""
     You are Wealthix AI, a financial intelligence assistant.
     Analyze these recurring payment patterns and provide insights.
-    Data contains amounts and categories only — no personal info.
 
     Payment data: {schedules_summary}
 
@@ -70,18 +75,15 @@ async def generate_insights(schedules_summary: str) -> dict:
     Maximum 5 items per array. Be specific and actionable.
     No markdown. JSON only.
     """
-    result = await call_gemini(prompt)
-    if not result:
-        return {
-            "optimization_tips": [],
-            "risk_flags": [],
-            "savings_opportunities": []
-        }
     try:
-        import json
-        cleaned = result.strip().replace("```json","").replace("```","")
-        return json.loads(cleaned)
-    except Exception:
+        model = get_model()
+        response = model.generate_content(
+            prompt,
+            generation_config=GenerationConfig(response_mime_type="application/json")
+        )
+        return json.loads(response.text)
+    except Exception as e:
+        logger.warn(f"Insights failed: {e}")
         return {
             "optimization_tips": [],
             "risk_flags": [],

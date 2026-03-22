@@ -70,6 +70,7 @@ public class WebSecurityConfig {
                         .requestMatchers("/api-docs/**", "/swagger-ui.html", "/swagger-ui/**").permitAll()
                         .requestMatchers("/", "/api", "/health", "/favicon.ico", "/error", "/static/**", "/css/**",
                                 "/js/**", "/images/**", "/ws/**").permitAll()
+                        .requestMatchers("/api/plaid/webhook").permitAll()
                         .requestMatchers("/api/plaid/**").authenticated()
                         .anyRequest().authenticated());
 

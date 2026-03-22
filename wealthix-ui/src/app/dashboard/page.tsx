@@ -10,12 +10,12 @@ import {
 } from 'recharts';
 import {
     Brain, ShieldAlert, TrendingDown, Wallet,
-    ArrowUpRight, ArrowDownRight, RefreshCw, Loader2, CalendarDays
+    ArrowUpRight, ArrowDownRight, RefreshCw, Loader2, CalendarDays, Zap
 } from 'lucide-react';
 import AddTransactionModal from '@/components/shared/AddTransactionModal';
 import AIDrawer from '@/components/shared/AIDrawer';
 import { GamificationCard } from '@/components/dashboard/GamificationCard';
-import { transactionService, plaidService } from '@/services/api';
+import { transactionService, plaidService, chatService } from '@/services/api';
 import { cn } from '@/components/ui/Card';
 
 const COLORS = ['#14B8A6', '#F59E0B', '#0F172A', '#E11D48', '#6366F1', '#8B5CF6', '#EC4899'];
@@ -205,6 +205,9 @@ export default function Dashboard() {
             </div>
             
             <GamificationCard />
+
+            {/* ── AI Wealth Tip ───────────────────────────────────────────── */}
+            <WealthTipCard />
 
             {/* ── Stat Cards ──────────────────────────────────────────────── */}
             {loading ? (
@@ -601,6 +604,81 @@ function NetWorthPill({ label, value, color, highlight }: { label: string; value
         <div className={cn("p-4 rounded-2xl border", styles[color] || styles.emerald, highlight && "ring-1 ring-[#D4AF37]/30")}>
             <p className="text-[10px] font-black uppercase tracking-wider opacity-70">{label}</p>
             <p className="text-xl font-black mt-1">{value}</p>
+        </div>
+    );
+}
+
+import { ExpertInsightCard } from '@/components/dashboard/ExpertInsightCard';
+
+function WealthTipCard() {
+    const [insight, setInsight] = useState<any>(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchInsight = async () => {
+            try {
+                const res = await chatService.getLatestInsight();
+                if (res.data) setInsight(res.data);
+            } catch (e) {
+                console.error("Failed to fetch latest AI insight", e);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchInsight();
+    }, []);
+
+    if (loading) return <div className="h-24 bg-white/5 rounded-2xl animate-pulse" />;
+    if (!insight) return null;
+
+    const velocityColor = 
+        insight.spendingVelocity === 'accelerating' ? 'text-rose-400' :
+        insight.spendingVelocity === 'decelerating' ? 'text-emerald-400' :
+        'text-slate-400';
+
+    return (
+        <div className="space-y-6">
+            {/* Card A: Standard Audit (Gemini) */}
+            <Card className="border-secondary/20 bg-gradient-to-br from-[#0D0B1E] to-[#1A1635] shadow-2xl relative overflow-hidden group">
+                <div className="flex flex-col md:flex-row gap-6 p-2">
+                    <div className="flex-1 space-y-4">
+                        <div className="flex items-center gap-3">
+                            <div className="p-2 bg-secondary/10 rounded-lg text-secondary group-hover:scale-110 transition-transform">
+                                <Brain className="w-5 h-5" />
+                            </div>
+                            <h3 className="font-extrabold text-[#D4AF37] uppercase tracking-widest text-[10px]">Standard Audit (Gemini 1.5 Flash)</h3>
+                        </div>
+                        <div className="text-sm font-medium text-slate-300 leading-relaxed italic prose prose-invert max-w-none">
+                            {insight.wealthTip}
+                        </div>
+                    </div>
+
+                    <div className="flex gap-4 border-l border-white/5 md:pl-6">
+                        <div className="space-y-1">
+                            <p className="text-[10px] font-black uppercase text-slate-500 tracking-widest">Velocity</p>
+                            <p className={cn("text-xs font-bold uppercase", velocityColor)}>{insight.spendingVelocity}</p>
+                        </div>
+                        <div className="space-y-1">
+                            <p className="text-[10px] font-black uppercase text-slate-500 tracking-widest">Health</p>
+                            <p className="text-xs font-bold text-slate-200">{insight.financialHealthScore}/100</p>
+                        </div>
+                        <div className="space-y-1">
+                            <p className="text-[10px] font-black uppercase text-slate-500 tracking-widest">Precision</p>
+                            <p className="text-xs font-bold text-slate-200">95%</p>
+                        </div>
+                    </div>
+                </div>
+                <div className="absolute -bottom-12 -left-12 w-32 h-32 bg-secondary/10 blur-[60px] pointer-events-none" />
+            </Card>
+
+            {/* Card B: Expert Insights (Claude) - Conditional */}
+            {insight.expertAdvice && (
+                <ExpertInsightCard insight={{
+                    expertAdvice: insight.expertAdvice,
+                    complexityScore: insight.routerConfidenceScore,
+                    modelUsed: insight.modelUsed
+                }} />
+            )}
         </div>
     );
 }

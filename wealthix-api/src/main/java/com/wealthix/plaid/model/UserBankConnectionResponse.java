@@ -12,6 +12,7 @@ public class UserBankConnectionResponse {
     private String institutionName;
     private String accountName;
     private String accountType;
+    private String accountSubtype;
     private String accountMask;
     private Double currentBalance;
 
@@ -21,7 +22,8 @@ public class UserBankConnectionResponse {
                 .institutionName(entity.getInstitutionName())
                 .accountName(entity.getAccountName())
                 .accountType(entity.getAccountType())
-                // .accountMask(entity.getAccountMask()) // Add if entity updated
+                .accountSubtype(entity.getAccountSubtype())
+                .accountMask(entity.getAccountMask())
                 .currentBalance(entity.getCurrentBalance())
                 .build();
     }

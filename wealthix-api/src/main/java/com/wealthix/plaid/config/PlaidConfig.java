@@ -23,20 +23,19 @@ public class PlaidConfig {
   @Bean
   public PlaidApi plaidApi() {
     HashMap<String, String> apiKeys = new HashMap<>();
-    apiKeys.put("clientId", clientId);
-    apiKeys.put("secret", secret);
+    apiKeys.put("clientId", clientId.trim());
+    apiKeys.put("secret", secret.trim());
     apiKeys.put("plaidVersion", "2020-09-14");
 
     ApiClient apiClient = new ApiClient(apiKeys);
     
-    // Select environment
+    // Select environment based on PLAID_ENV
     switch (environment.toLowerCase()) {
       case "production":
         apiClient.setPlaidAdapter(ApiClient.Production);
         break;
       case "development":
-        apiClient.setPlaidAdapter(ApiClient.Sandbox);
-        break;
+      case "sandbox":
       default:
         apiClient.setPlaidAdapter(ApiClient.Sandbox);
     }

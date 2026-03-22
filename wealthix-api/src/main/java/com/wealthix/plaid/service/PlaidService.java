@@ -7,6 +7,7 @@ import com.wealthix.repository.UserBankConnectionRepository;
 import com.wealthix.service.EncryptionService;
 import com.plaid.client.request.PlaidApi;
 import com.plaid.client.model.*;
+import com.plaid.client.model.TransactionsGetRequestOptions;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -19,6 +20,12 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.concurrent.CompletableFuture;
+import com.wealthix.plaid.model.UserBankConnectionResponse;
+import com.wealthix.ai.model.dto.JassHybridResponseDTO;
+import com.wealthix.ai.model.dto.AITransactionDTO;
+import com.wealthix.ai.model.entity.WealthInsight;
+import com.wealthix.ai.repository.WealthInsightRepository;
 
 @Service
 @RequiredArgsConstructor
@@ -29,6 +36,8 @@ public class PlaidService {
   private final EncryptionService encryptionService;
   private final UserBankConnectionRepository connectionRepo;
   private final TransactionRepository transactionRepo;
+  private final com.wealthix.autopay.service.WealthixAiClient aiClient;
+  private final WealthInsightRepository insightRepo;
 
   @Value("${plaid.products}")
   private String products;
@@ -77,10 +86,12 @@ public class PlaidService {
           plaidApi.linkTokenCreate(request).execute();
 
       if (!response.isSuccessful() || response.body() == null) {
-        log.error("[Wealthix] Link token creation failed: {}",
-            response.code());
+        String requestId = response.headers().get("plaid-request-id");
+        String errorMsg = response.errorBody() != null ? response.errorBody().string() : "Unknown error";
+        log.error("[Wealthix] Link token creation failed: code={} requestId={} error={}",
+            response.code(), requestId, errorMsg);
         throw new RuntimeException(
-            "Failed to create Plaid link token");
+            "Plaid link token creation failed (ID: " + requestId + "): " + errorMsg);
       }
 
       log.info("[Wealthix] Link token created: userId={}",
@@ -101,10 +112,10 @@ public class PlaidService {
    * Exchanges public_token for access_token
    * Encrypts and saves access_token
    */
-  public List<UserBankConnection> exchangePublicToken(
+  public List<UserBankConnectionResponse> exchangePublicToken(
       String publicToken, String userId) {
     try {
-      // Exchange public token for access token
+      // 1. Exchange public token for access token
       ItemPublicTokenExchangeRequest exchangeRequest =
           new ItemPublicTokenExchangeRequest()
               .publicToken(publicToken);
@@ -115,41 +126,42 @@ public class PlaidService {
 
       if (!exchangeResponse.isSuccessful()
           || exchangeResponse.body() == null) {
-        log.error("[Wealthix] Token exchange failed: {}",
-            exchangeResponse.code());
-        throw new RuntimeException(
-            "Failed to connect bank account");
+        log.error("[Wealthix] Token exchange failed: code={} raw={}", 
+            exchangeResponse.code(), exchangeResponse.errorBody());
+        throw new RuntimeException("Failed to exchange Plaid token");
       }
 
-      String accessToken =
-          exchangeResponse.body().getAccessToken();
+      String accessToken = exchangeResponse.body().getAccessToken();
       String itemId = exchangeResponse.body().getItemId();
 
-      // Encrypt access token BEFORE saving
-      String encryptedToken =
-          encryptionService.encrypt(accessToken);
+      // 2. Encrypt access token BEFORE saving
+      String encryptedToken = encryptionService.encrypt(accessToken);
 
-      // Get account details
-      List<UserBankConnection> connections =
-          fetchAndSaveAccounts(
-              encryptedToken, itemId, userId,
-              accessToken  // plaintext for API call only
-          );
+      // 3. Fetch account details (inst name, mask, subtype) and save
+      List<UserBankConnection> savedEntities = fetchAndSaveAccounts(
+          encryptedToken, itemId, userId, accessToken);
 
-      // Trigger initial sync
-      syncTransactions(userId, encryptedToken);
+      // 4. Async trigger for initial AI analysis (First-Sync)
+      String plaintextToken = accessToken; // alias for clarity
+      CompletableFuture.runAsync(() -> {
+          log.info("[Wealthix] Triggering async first-sync for user: {} itemId: {}", userId, itemId);
+          syncTransactions(userId, encryptedToken);
+      }).exceptionally(ex -> {
+          log.warn("[Wealthix] First-sync failed for user {}: {}", userId, ex.getMessage());
+          return null;
+      });
 
-      // Audit log — no token logged
-      log.info("[Wealthix] Bank connected: userId={} accounts={}",
-          userId, connections.size());
+      log.info("[Wealthix] Bank connection established: userId={} itemId={} connections={}",
+          userId, itemId, savedEntities.size());
 
-      return connections;
+      // 5. Convert to Response DTOs
+      return savedEntities.stream()
+          .map(UserBankConnectionResponse::fromEntity)
+          .collect(Collectors.toList());
 
     } catch (IOException e) {
-      log.error("[Wealthix] Exchange failed: {}",
-          e.getClass().getSimpleName());
-      throw new RuntimeException(
-          "Failed to connect bank account");
+      log.error("[Wealthix] Plaid API error during exchange: {}", e.getMessage());
+      throw new RuntimeException("Plaid service error during token exchange");
     }
   }
 
@@ -233,29 +245,52 @@ public class PlaidService {
       String accessToken =
           encryptionService.decrypt(encryptedToken);
 
-      // Date range: last 30 days
+      // Date range: last 180 days for deeper historical analysis
       LocalDate startDate =
-          LocalDate.now().minusDays(30);
+          LocalDate.now().minusDays(180);
       LocalDate endDate = LocalDate.now();
 
-      TransactionsGetRequest txRequest =
-          new TransactionsGetRequest()
-              .accessToken(accessToken)
-              .startDate(startDate)
-              .endDate(endDate);
+      // Paginate: Plaid defaults to 100 per page; loop until all fetched
+      List<com.plaid.client.model.Transaction> plaidTxs = new ArrayList<>();
+      List<AccountBase> plaidAccounts = null;
+      int offset = 0;
+      int totalTransactions = Integer.MAX_VALUE;
 
-      Response<TransactionsGetResponse> txResponse =
-          plaidApi.transactionsGet(txRequest).execute();
+      while (plaidTxs.size() < totalTransactions) {
+        TransactionsGetRequest txRequest =
+            new TransactionsGetRequest()
+                .accessToken(accessToken)
+                .startDate(startDate)
+                .endDate(endDate)
+                .options(new TransactionsGetRequestOptions()
+                    .count(500)
+                    .offset(offset));
 
-      if (!txResponse.isSuccessful()
-          || txResponse.body() == null) {
-        log.warn("[Wealthix] Transaction sync failed: {}",
-            txResponse.code());
+        Response<TransactionsGetResponse> txResponse =
+            plaidApi.transactionsGet(txRequest).execute();
+
+        if (!txResponse.isSuccessful() || txResponse.body() == null) {
+          log.warn("[Wealthix] Transaction sync failed at offset {}: {}", offset, txResponse.code());
+          break;
+        }
+
+        if (plaidAccounts == null) {
+          plaidAccounts = txResponse.body().getAccounts();
+          totalTransactions = txResponse.body().getTotalTransactions();
+        }
+
+        List<com.plaid.client.model.Transaction> page = txResponse.body().getTransactions();
+        if (page.isEmpty()) break;
+        plaidTxs.addAll(page);
+        offset += page.size();
+      }
+
+      if (plaidAccounts == null) {
+        log.warn("[Wealthix] Transaction sync returned no data for user {}", userId);
         return;
       }
 
       // Update balances for all accounts in this item
-      List<AccountBase> plaidAccounts = txResponse.body().getAccounts();
       for (AccountBase plaidAccount : plaidAccounts) {
           connectionRepo.findByPlaidAccountIdAndUserId(
               plaidAccount.getAccountId(), UUID.fromString(userId))
@@ -265,9 +300,6 @@ public class PlaidService {
                   connectionRepo.save(conn);
               });
       }
-
-      List<com.plaid.client.model.Transaction> plaidTxs =
-          txResponse.body().getTransactions();
 
       int saved = 0;
       for (com.plaid.client.model.Transaction plaidTx
@@ -305,10 +337,59 @@ public class PlaidService {
           " saved={} total={}",
           userId, saved, plaidTxs.size());
 
+      // Push to AI for RAG indexing
+      List<com.wealthix.ai.model.dto.AITransactionDTO> aiTxs = getTransactionsForAI(userId);
+      // ingestTransactions still uses Map for now as it's a generic ingest, but we can update it too if needed
+      // For now focusing on analyzeTransactions
+      
+      // Trigger full Jass Analysis and store report
+      aiClient.analyzeTransactions(userId, aiTxs, null).ifPresent(report -> {
+          try {
+              WealthInsight insight = new WealthInsight();
+              insight.setUserId(UUID.fromString(userId));
+              insight.setWealthTip(report.getStandardReport()); // Use standardReport field
+              insight.setAnalysisId(UUID.fromString(report.getAnalysisId()));
+              
+              // Jass 2.0 fields
+              insight.setFinancialHealthScore(report.getHealthScore());
+              // For Legacy compatibility or future expansion, we can map spending_velocity
+              // but for now focusing on the health score and ghost count
+              insight.setGhostSubscriptions(report.getGhostSubscriptions() != null ? report.getGhostSubscriptions().size() : 0);
+              
+              // Record which model was used and the confidence score for transparency
+              insight.setModelUsed(report.getModelUsed());
+              insight.setRouterConfidenceScore(report.getComplexityScore());
+
+              insightRepo.save(insight);
+              log.info("[Wealthix] New financial insight stored (analysisId={}) for user={}", 
+                  report.getAnalysisId(), userId);
+          } catch (Exception e) {
+              log.warn("[Wealthix] Failed to save AI insight: {}", e.getMessage());
+          }
+      });
+
     } catch (Exception e) {
       log.warn("[Wealthix] Sync error for user {}: {}",
           userId, e.getMessage());
     }
+  }
+
+  /**
+   * Triggers sync for all connections sharing a Plaid item_id
+   * Triggered by webhook SYNC_UPDATES_AVAILABLE
+   */
+  public void syncByItemId(String itemId) {
+    var connections = connectionRepo.findByItemId(itemId);
+    if (connections.isEmpty()) {
+       log.warn("[Wealthix Webhook] No connections found for item_id: {}", itemId);
+       return;
+    }
+
+    String encryptedToken = connections.get(0).getEncryptedAccessToken();
+    String userId = connections.get(0).getUserId().toString();
+
+    log.info("[Wealthix Webhook] Triggering sync for item={} user={}", itemId, userId);
+    syncTransactions(userId, encryptedToken);
   }
 
   /**
@@ -407,7 +488,10 @@ public class PlaidService {
   }
 
   public List<UserBankConnection> getConnections(String userId) {
-      return connectionRepo.findByUserId(UUID.fromString(userId));
+      return connectionRepo.findByUserId(UUID.fromString(userId))
+          .stream()
+          .filter(UserBankConnection::isActive)
+          .collect(Collectors.toList());
   }
 
   public void disconnectBank(UUID connectionId, String userId) {
@@ -432,41 +516,117 @@ public class PlaidService {
   /**
    * Builds a full financial position summary for the user.
    */
-  public com.wealthix.dto.FinancialSummaryDTO getFinancialSummary(String userId) {
-      List<UserBankConnection> connections = connectionRepo.findByUserId(UUID.fromString(userId));
+    public com.wealthix.dto.FinancialSummaryDTO getFinancialSummary(String userId) {
+        List<UserBankConnection> connections = connectionRepo.findByUserId(UUID.fromString(userId));
 
-      double totalAssets = 0;
-      double totalLiabilities = 0;
-      double totalCreditLimit = 0;
-      List<com.wealthix.dto.AccountSummaryDTO> accounts = new ArrayList<>();
+        double totalAssets = 0;
+        double totalLiabilities = 0;
+        double totalCreditLimit = 0;
+        List<com.wealthix.dto.AccountSummaryDTO> accounts = new ArrayList<>();
 
-      for (UserBankConnection conn : connections) {
-          double balance = conn.getCurrentBalance() != null ? conn.getCurrentBalance() : 0.0;
-          String type = conn.getAccountType() != null ? conn.getAccountType() : "CHECKING";
+        for (UserBankConnection conn : connections) {
+            double balance = conn.getCurrentBalance() != null ? conn.getCurrentBalance() : 0.0;
+            String type = conn.getAccountType() != null ? conn.getAccountType() : "CHECKING";
 
-          Double utilization = null;
-          Double creditLimit = conn.getCreditLimit();
+            Double utilization = null;
+            Double creditLimit = conn.getCreditLimit();
 
-          if ("CREDIT".equals(type)) {
-              totalLiabilities += balance;
-              if (creditLimit != null && creditLimit > 0) {
-                  totalCreditLimit += creditLimit;
-                  utilization = Math.round((balance / creditLimit) * 1000.0) / 10.0;
-              }
-          } else {
-              totalAssets += balance;
-          }
+            if ("CREDIT".equals(type)) {
+                double absBalance = Math.abs(balance);
+                totalLiabilities += absBalance;
+                if (creditLimit != null && creditLimit > 0) {
+                    totalCreditLimit += creditLimit;
+                    utilization = Math.round((absBalance / creditLimit) * 1000.0) / 10.0;
+                }
+            } else {
+                totalAssets += balance;
+            }
 
-          accounts.add(new com.wealthix.dto.AccountSummaryDTO(
-                  conn.getPlaidAccountId(),
-                  conn.getAccountName() != null ? conn.getAccountName() : conn.getInstitutionName(),
-                  conn.getInstitutionName(),
-                  type,
-                  balance,
-                  creditLimit,
-                  utilization));
-      }
+            accounts.add(new com.wealthix.dto.AccountSummaryDTO(
+                    conn.getPlaidAccountId(),
+                    conn.getAccountName() != null ? conn.getAccountName() : conn.getInstitutionName(),
+                    conn.getInstitutionName(),
+                    type,
+                    balance,
+                    creditLimit,
+                    utilization));
+        }
 
-      return new com.wealthix.dto.FinancialSummaryDTO(totalAssets, totalLiabilities, totalCreditLimit, accounts);
-  }
+        return new com.wealthix.dto.FinancialSummaryDTO(totalAssets, totalLiabilities, totalCreditLimit, accounts);
+    }
+
+    /**
+     * Fetches a 90-day window of transactions, maps them to AITransactionDTO,
+     * and prepares the payload for the Python Hybrid AI Service.
+     * Supports both userId or itemId for flexibility in chat context.
+     */
+    public List<com.wealthix.ai.model.dto.AITransactionDTO> getTransactionsForAI(String identifier) {
+        List<UserBankConnection> connections;
+        try {
+            // 1. Try resolving by userId first (UUID format)
+            connections = connectionRepo.findByUserId(UUID.fromString(identifier));
+        } catch (IllegalArgumentException e) {
+            // 2. Fallback: try by itemId if it's not a UUID
+            connections = connectionRepo.findByItemId(identifier);
+        }
+
+        if (connections.isEmpty()) {
+            log.warn("[Wealthix] No bank connections found for AI request (id={})", identifier);
+            return List.of();
+        }
+
+        List<com.wealthix.ai.model.dto.AITransactionDTO> aiTransactions = new ArrayList<>();
+
+        for (UserBankConnection conn : connections) {
+            try {
+                String accessToken = encryptionService.decrypt(conn.getEncryptedAccessToken());
+                
+                // Fetch last 180 days for better historical context
+                LocalDate startDate = LocalDate.now().minusDays(180);
+                LocalDate endDate = LocalDate.now();
+
+                TransactionsGetRequest request = new TransactionsGetRequest()
+                        .accessToken(accessToken)
+                        .startDate(startDate)
+                        .endDate(endDate);
+
+                Response<TransactionsGetResponse> response = plaidApi.transactionsGet(request).execute();
+
+                if (response.isSuccessful()) {
+                    TransactionsGetResponse body = response.body();
+                    if (body != null) {
+                        for (com.plaid.client.model.Transaction tx : body.getTransactions()) {
+                            String category = "UNCATEGORIZED";
+                            PersonalFinanceCategory pfc = tx.getPersonalFinanceCategory();
+                            if (pfc != null) {
+                                category = pfc.getPrimary();
+                            }
+
+                            Map<String, String> location = new HashMap<>();
+                            if (tx.getLocation() != null) {
+                                if (tx.getLocation().getCity() != null) location.put("city", tx.getLocation().getCity());
+                                if (tx.getLocation().getRegion() != null) location.put("region", tx.getLocation().getRegion());
+                                if (tx.getLocation().getCountry() != null) location.put("country", tx.getLocation().getCountry());
+                            }
+
+                            aiTransactions.add(com.wealthix.ai.model.dto.AITransactionDTO.builder()
+                                .id(tx.getTransactionId())
+                                .amount(tx.getAmount())
+                                .date(tx.getDate().toString())
+                                .description(tx.getName())
+                                .category(category)
+                                .merchant(tx.getMerchantName())
+                                .pending(tx.getPending())
+                                .accountSubtype(conn.getAccountSubtype())
+                                .location(location)
+                                .build());
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                log.warn("[Wealthix] Failed to fetch transactions for AI: id={}, account={}", identifier, conn.getAccountName());
+            }
+        }
+        return aiTransactions;
+    }
 }

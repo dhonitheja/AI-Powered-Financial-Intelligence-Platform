@@ -1,0 +1,28 @@
+D:\Ideas\AI-Powered Financial Intelligence Platform\financial-ai-service\app\services\gemini_service.py:1: FutureWarning: 
+
+All support for the `google.generativeai` package has ended. It will no longer be receiving 
+updates or bug fixes. Please switch to the `google.genai` package as soon as possible.
+See README for more details:
+
+https://github.com/google-gemini/deprecated-generative-ai-python/blob/main/README.md
+
+  import google.generativeai as genai
+DEBUG: Loaded GEMINI_API_KEY: AIzaSyCa...
+{"timestamp": "2026-03-21T21:32:57.590734Z", "level": "INFO", "service": "wealthix-ai", "message": "Vertex AI initialized successfully (project=wealthix-pro)", "logger": "root"}
+C:\Users\Dhoni\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\vertexai\generative_models\_generative_models.py:433: UserWarning: This feature is deprecated as of June 24, 2025 and will be removed on June 24, 2026. For details, see https://cloud.google.com/vertex-ai/generative-ai/docs/deprecations/genai-vertexai-sdk.
+  warning_logs.show_deprecation_warning()
+[Test] Sending 180-day data with TAX QUERY to Hybrid Router...
+{"timestamp": "2026-03-21T21:32:57.599255Z", "level": "INFO", "service": "wealthix-ai", "message": "Hybrid Router: Routing to Gemini Flash for user=test-user-uuid", "logger": "app.services.ai_service"}
+{"timestamp": "2026-03-21T21:33:09.391969Z", "level": "ERROR", "service": "wealthix-ai", "message": "Hybrid Router failed: Your default credentials were not found. To set up Application Default Credentials, see https://cloud.google.com/docs/authentication/external/set-up-adc for more information.", "logger": "app.services.ai_service"}
+{"timestamp": "2026-03-21T21:33:09.392509Z", "level": "INFO", "service": "wealthix-ai", "message": "{\"method\": \"POST\", \"path\": \"/assistant/analyze\", \"status\": 200, \"duration_ms\": 11798.78, \"service\": \"wealthix-ai\"}", "logger": "root"}
+{"timestamp": "2026-03-21T21:33:09.393383Z", "level": "INFO", "service": "wealthix-ai", "message": "HTTP Request: POST http://testserver/assistant/analyze \"HTTP/1.1 200 OK\"", "logger": "httpx"}
+[Test] Gemini Flash found 0 ghost subscriptions.
+{"timestamp": "2026-03-21T21:33:09.394214Z", "level": "INFO", "service": "wealthix-ai", "message": "Shutting down", "logger": "root"}
+Traceback (most recent call last):
+  File "D:\Ideas\AI-Powered Financial Intelligence Platform\financial-ai-service\tests\test_ghost.py", line 64, in <module>
+    test_ghost_subscription_detection()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "D:\Ideas\AI-Powered Financial Intelligence Platform\financial-ai-service\tests\test_ghost.py", line 47, in test_ghost_subscription_detection
+    assert ghost_count > 0
+           ^^^^^^^^^^^^^^^
+AssertionError

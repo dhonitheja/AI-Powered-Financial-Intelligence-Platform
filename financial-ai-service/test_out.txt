@@ -1,0 +1,62 @@
+D:\Ideas\AI-Powered Financial Intelligence Platform\financial-ai-service\app\main.py:4: FutureWarning: 
+
+All support for the `google.generativeai` package has ended. It will no longer be receiving 
+updates or bug fixes. Please switch to the `google.genai` package as soon as possible.
+See README for more details:
+
+https://github.com/google-gemini/deprecated-generative-ai-python/blob/main/README.md
+
+  import google.generativeai as genai
+DEBUG: Loaded GEMINI_API_KEY: AIzaSyCa...
+[Test] Sending 180-day noisy mock data to analyze endpoint...
+{"timestamp": "2026-03-21T21:23:05.333788Z", "level": "INFO", "service": "wealthix-ai", "message": "Jass stress-testing 180-day data for user=test-user-uuid", "logger": "root"}
+{"timestamp": "2026-03-21T21:23:05.334417Z", "level": "INFO", "service": "wealthix-ai", "message": "Jass generating detailed report for user=test-user-uuid", "logger": "app.services.ai_service"}
+DEBUG: Raw AI Response: {
+  "answer": "### JASS 2.0 EXECUTIVE SUMMARY\n\n**OVERVIEW:** Audit of `test-user-uuid` reveals a high-performing financial profile with advanced capital allocation strategies, specifically noted in the aggressive **HSA contribution** ($1,200). Spending velocity is currently **stable**, though non-essential leakage is present.\n\n**AUDITOR INSIGHTS:**\n- **Pattern Recognition:** Identified a monthly entertainment subscription ($14.99) spanning 6 months despite 5 different merchant descriptors (AMZN MKTP, Amazon Prime, etc.). This is a confirmed recurring cost, not an anomaly.\n- **Temporal Cycle:** Detected a **60-day bi-monthly cycle** for GEICO insurance ($99.00), suggesting a structured payment plan rather than a monthly premium.\n- **Leakage Point:** The entertainment stack (Amazon + Hulu/Disney) accounts for a cumulative 5-year opportunity cost of **$1,438.22** if redirected to a diversified index at 8% ARR.\n\n**TAX STRATEGY:**\n- **HSA Optimization:** The $1,200 transfer is a Tier-1 tax event. Ensure this is filed to reduce your Adjusted Gross Income (AGI).\n- **Business Deductions:** The Staples purchase ($245.50) is flagged for Schedule C deduction. Retain digital receipt for audit trail.",
+  "analysis_id": "656c5b23-086a-4000-a356-82db21217367",
+  "financial_health_score": 88,
+  "analysis_metrics": {
+    "spending_velocity_label": "stable",
+    "risk_score": 2.4,
+    "burn_rate": "$12.57/day",
+    "ghost_subscriptions_found": 1,
+    "daily_burn_rate": 12.57,
+    "savings_rate_change": "+4.2%"
+  },
+  "tax_corner": {
+    "deductible_estimate": 1445.50,
+    "flagged_tax_events": [
+      {
+        "tx_id": "tax_1",
+        "reason": "HSA Contribution - Pre-tax deduction eligibility",
+        "category": "MEDICAL_SAVINGS"
+      },
+      {
+        "tx_id": "tax_2",
+        "reason": "Office Supplies - Potential Schedule C business expense",
+        "category": "OFFICE_SUPPLIES"
+      }
+    ]
+  },
+  "wealth_action_plan": [
+    "Maximize HSA investment threshold to shift from 'savings' to 'growth' vehicle.",
+    "Consolidate Amazon descriptors into a single tracking category to monitor 'Prime Creep'.",
+    "Allocate the $245.50 office spend against 1099-NEC income if applicable."
+  ],
+  "suggestions": [
+    "Review Hulu/Disney subscription for 'ghost' status; price variance noted ($10.81 to $10.82).",
+    "Audit Geico bi-monthly cycle to ensure no double-billing occurred in the Dec-Mar window."
+  ]
+}
+{"timestamp": "2026-03-21T21:23:15.205947Z", "level": "INFO", "service": "wealthix-ai", "message": "Successfully generated Spending Velocity report for user=test-user-uuid", "logger": "app.services.ai_service"}
+{"timestamp": "2026-03-21T21:23:15.206586Z", "level": "INFO", "service": "wealthix-ai", "message": "{\"method\": \"POST\", \"path\": \"/assistant/analyze\", \"status\": 200, \"duration_ms\": 9876.33, \"service\": \"wealthix-ai\"}", "logger": "root"}
+{"timestamp": "2026-03-21T21:23:15.208966Z", "level": "INFO", "service": "wealthix-ai", "message": "HTTP Request: POST http://testserver/assistant/analyze \"HTTP/1.1 200 OK\"", "logger": "httpx"}
+[Test] AI found 1 ghost subscriptions.
+Traceback (most recent call last):
+  File "D:\Ideas\AI-Powered Financial Intelligence Platform\financial-ai-service\tests\test_ghost.py", line 71, in <module>
+    test_ghost_subscription_detection()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "D:\Ideas\AI-Powered Financial Intelligence Platform\financial-ai-service\tests\test_ghost.py", line 46, in test_ghost_subscription_detection
+    assert ghost_count >= 3, f"AI failed to detect all 3 noisy subscriptions. Found: {ghost_count}"
+           ^^^^^^^^^^^^^^^^
+AssertionError: AI failed to detect all 3 noisy subscriptions. Found: 1

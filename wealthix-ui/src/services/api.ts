@@ -137,6 +137,8 @@ export const plaidService = {
     getSyncStatus: () => api.get('/v1/plaid/sync-status'),
     /** Returns all linked bank/credit connections for the authenticated user */
     getConnections: () => api.get('/v1/plaid/connections'),
+    /** Disconnects a linked bank account by connection ID */
+    disconnectBank: (connectionId: string) => api.delete(`/v1/plaid/connections/${connectionId}`),
 };
 
 // ─── Budget Service ─────────────────────────────────────────────────────────
@@ -201,6 +203,9 @@ export const chatService = {
 
     getSavingsGoals: () => api.get('/v1/ai/savings-goals'),
     createSavingsGoal: (data: any) => api.post('/v1/ai/savings-goals', data),
+
+    /** Fetches the latest Jass report/Wealth Tip from the DB */
+    getLatestInsight: () => api.get('/ai/latest-insight'),
 };
 
 // ─── Gamification Service ───────────────────────────────────────────────────

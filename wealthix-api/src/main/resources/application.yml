@@ -10,7 +10,7 @@ plaid:
   transaction-days: 30
 
 encryption:
-  key: ${ENCRYPTION_KEY:1234567890123456}
+  key: ${ENCRYPTION_KEY:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=}
 
 wealthix:
   ai:
@@ -106,6 +106,10 @@ resilience4j:
         limit-refresh-period: 60s
         timeout-duration: 0s
       ai-chat:
+        limit-for-period: 30
+        limit-refresh-period: 1m
+        timeout-duration: 0s
+      plaid-sync:
         limit-for-period: 30
         limit-refresh-period: 1m
         timeout-duration: 0s

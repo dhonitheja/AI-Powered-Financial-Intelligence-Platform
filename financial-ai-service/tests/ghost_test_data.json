@@ -1,0 +1,21 @@
+[
+  { "id": "s1_m1", "amount": 14.99, "date": "2026-03-20", "description": "AMZN MKTP US*PRIME", "category": "ENTERTAINMENT", "merchant": "Amazon", "accountSubtype": "checking" },
+  { "id": "s1_m2", "amount": 14.99, "date": "2026-02-18", "description": "AMZN*Prime Video", "category": "ENTERTAINMENT", "merchant": "Amazon", "accountSubtype": "checking" },
+  { "id": "s1_m3", "amount": 14.99, "date": "2026-01-19", "description": "Amazon.com*Prime", "category": "ENTERTAINMENT", "merchant": "Amazon", "accountSubtype": "checking" },
+  { "id": "s1_m4", "amount": 14.99, "date": "2025-12-20", "description": "AMAZON PRIME", "category": "ENTERTAINMENT", "merchant": "Amazon", "accountSubtype": "checking" },
+  { "id": "s1_m5", "amount": 14.99, "date": "2025-11-20", "description": "AMZN MKTP", "category": "ENTERTAINMENT", "merchant": "Amazon", "accountSubtype": "checking" },
+  { "id": "s1_m6", "amount": 14.99, "date": "2025-10-21", "description": "Amazon Prime Member", "category": "ENTERTAINMENT", "merchant": "Amazon", "accountSubtype": "checking" },
+
+  { "id": "s2_m1", "amount": 99.00, "date": "2026-03-01", "description": "GEICO AUTO INSUR", "category": "INSURANCE", "merchant": "Geico", "accountSubtype": "checking" },
+  { "id": "s2_m2", "amount": 99.00, "date": "2025-12-30", "description": "GEICO AUTO INSUR", "category": "INSURANCE", "merchant": "Geico", "accountSubtype": "checking" },
+  { "id": "s2_m3", "amount": 99.00, "date": "2025-10-31", "description": "GEICO AUTO INS", "category": "INSURANCE", "merchant": "Geico", "accountSubtype": "checking" },
+
+  { "id": "tax_1", "amount": 1200.00, "date": "2026-03-10", "description": "TRANSFER TO HSA ACCOUNT", "category": "MEDICAL", "accountSubtype": "checking" },
+  { "id": "tax_2", "amount": 245.50, "date": "2026-03-12", "description": "STAPLES OFFICE SUPPLIES", "category": "OFFICE", "accountSubtype": "checking" },
+
+  { "id": "s5_m1", "amount": 10.82, "date": "2026-03-15", "description": "Hulu Disney Plus", "category": "ENTERTAINMENT", "merchant": "Hulu", "accountSubtype": "checking" },
+  { "id": "s5_m2", "amount": 10.81, "date": "2026-02-14", "description": "Hulu Disney Plus", "category": "ENTERTAINMENT", "merchant": "Hulu", "accountSubtype": "checking" },
+  { "id": "s5_m3", "amount": 10.81, "date": "2026-01-15", "description": "Hulu Disney Plus", "category": "ENTERTAINMENT", "merchant": "Hulu", "accountSubtype": "checking" },
+
+  { "id": "noise_1", "amount": 45.32, "date": "2026-03-22", "description": "Chevron Gas Station", "category": "TRAVEL", "merchant": "Chevron" }
+]

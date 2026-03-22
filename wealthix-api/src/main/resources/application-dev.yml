@@ -1,3 +1,12 @@
+plaid:
+  client-id: ${PLAID_CLIENT_ID}
+  secret: ${PLAID_SECRET}
+  env: ${PLAID_ENV:sandbox}
+  products: transactions
+  country-codes: US,CA
+  webhook-url: ${PLAID_WEBHOOK_URL:}
+  webhook-secret: ${PLAID_WEBHOOK_SECRET:}
+
 spring:
   datasource:
     url: jdbc:h2:mem:financialdb;DB_CLOSE_DELAY=-1
@@ -11,5 +20,11 @@ spring:
   jpa:
     database-platform: org.hibernate.dialect.H2Dialect
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: update
     show-sql: true
+
+wealthix:
+  ai:
+    service:
+      url: ${AI_SERVICE_URL:http://localhost:8000}
+      secret: ${INTERNAL_AI_SERVICE_SECRET:dev_internal_secret_key_123}

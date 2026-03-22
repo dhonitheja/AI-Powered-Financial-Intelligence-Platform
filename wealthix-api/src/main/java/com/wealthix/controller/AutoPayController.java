@@ -1,4 +1,4 @@
-package com.wealthix.autopay.controller;
+package com.wealthix.controller;
 
 import com.wealthix.autopay.model.dto.request.CreateAutoPayRequest;
 import com.wealthix.autopay.model.dto.request.UpdateAutoPayRequest;

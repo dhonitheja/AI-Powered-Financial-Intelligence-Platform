@@ -8,6 +8,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import com.wealthix.security.UserDetailsImpl;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -31,7 +32,11 @@ public class ExportController {
     }
 
     private List<Transaction> getTransactionsForUser(Authentication auth, String period) {
-        return transactionService.getAllTransactions(period);
+        if (auth != null && auth.getPrincipal() instanceof UserDetailsImpl userDetails) {
+            UUID userId = UUID.fromString(userDetails.getId());
+            return transactionService.getAllTransactions(userId, period);
+        }
+        return List.of();
     }
 
     @GetMapping("/csv")

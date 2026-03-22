@@ -1,7 +1,6 @@
-from fastapi import FastAPI, Request, status
-from fastapi.responses import JSONResponse
+from fastapi import FastAPI, Request
 from contextlib import asynccontextmanager
-import google.generativeai as genai
+import vertexai
 import os
 import uvicorn
 import logging
@@ -19,7 +18,6 @@ from app.routers import (
     budget_recommendations
 )
 
-
 class WealthixJsonFormatter(logging.Formatter):
     def format(self, record):
         log_entry = {
@@ -29,8 +27,6 @@ class WealthixJsonFormatter(logging.Formatter):
             "message": record.getMessage(),
             "logger": record.name,
         }
-        # NEVER log request bodies or response data
-        # that might contain financial information
         return json.dumps(log_entry)
 
 handler = logging.StreamHandler(sys.stdout)
@@ -39,24 +35,27 @@ logging.basicConfig(level=logging.INFO, handlers=[handler])
 
 from app.config.settings import settings
 
-# Initialize Gemini once at startup — not per request
+# Initialize Vertex AI once at startup
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    genai.configure(api_key=settings.gemini_api_key)
-    logging.info("Gemini initialized")
+    try:
+        # Initialize Vertex AI for both Gemini and Claude models
+        vertexai.init(project="wealthix-pro", location="us-central1")
+        logging.info("Vertex AI initialized successfully (project=wealthix-pro)")
+    except Exception as e:
+        logging.error(f"Vertex AI initialization failed: {str(e)}")
     yield
     logging.info("Shutting down")
 
 app = FastAPI(
     title="Wealthix AI Service",
-    description="Internal AI service for Wealthix platform",
-    version="1.0.0",
-    docs_url=None,      # disable public Swagger
-    redoc_url=None,     # disable public ReDoc
+    description="Internal AI service (Jass 2.0 Hybrid Router)",
+    version="2.0.0",
+    docs_url=None,
+    redoc_url=None,
     lifespan=lifespan
 )
 
-# Request logging middleware (logs method + path ONLY, no bodies)
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
     start = datetime.utcnow()
@@ -65,13 +64,13 @@ async def log_requests(request: Request, call_next):
     logging.info(json.dumps({
         "method": request.method,
         "path": request.url.path,
-        # Never log: query params, headers, body
         "status": response.status_code,
         "duration_ms": round(duration * 1000, 2),
         "service": "wealthix-ai"
     }))
     return response
 
+# Standard Routers
 app.include_router(autopay_insights.router, prefix="/autopay")
 app.include_router(transaction_enrichment.router, prefix="/transactions")
 app.include_router(financial_advice.router, prefix="/advice")
@@ -82,7 +81,7 @@ app.include_router(budget_recommendations.router, prefix="/budget")
 
 @app.get("/health")
 async def health():
-    return {"status": "ok", "service": "wealthix-ai"}
+    return {"status": "ok", "service": "wealthix-ai", "engine": "VertexAI-Hybrid"}
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=int(os.getenv("PORT", 8000)), reload=True)

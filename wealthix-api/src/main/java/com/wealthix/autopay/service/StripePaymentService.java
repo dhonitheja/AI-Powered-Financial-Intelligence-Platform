@@ -104,7 +104,7 @@ public class StripePaymentService {
      */
     @Transactional
     public String createOrGetCustomer(String userId, String email) throws StripeException {
-        AppUser user = userRepository.findById(userId)
+        AppUser user = userRepository.findById(UUID.fromString(userId))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
         // Return existing customer ID if already registered
@@ -171,7 +171,7 @@ public class StripePaymentService {
      */
     @Transactional
     public PaymentMethodResponse attachPaymentMethod(String userId, String paymentMethodId) throws StripeException {
-        AppUser user = userRepository.findById(userId)
+        AppUser user = userRepository.findById(UUID.fromString(userId))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
         if (user.getStripeCustomerId() == null) {
@@ -208,7 +208,7 @@ public class StripePaymentService {
      * @param userId the application user's UUID string
      */
     public List<PaymentMethodResponse> listPaymentMethods(String userId) throws StripeException {
-        AppUser user = userRepository.findById(userId)
+        AppUser user = userRepository.findById(UUID.fromString(userId))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
         if (user.getStripeCustomerId() == null) {
@@ -236,7 +236,7 @@ public class StripePaymentService {
      */
     @Transactional
     public void detachPaymentMethod(String userId, String paymentMethodId) throws StripeException {
-        AppUser user = userRepository.findById(userId)
+        AppUser user = userRepository.findById(UUID.fromString(userId))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
         // Ownership check: verify this PM belongs to the user's customer
@@ -276,7 +276,7 @@ public class StripePaymentService {
      */
     @Transactional
     public AutoPayExecutionLog execute(UUID scheduleId, UUID userId) {
-        AppUser user = userRepository.findById(userId.toString())
+        AppUser user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
         AutoPaySchedule schedule = scheduleRepository

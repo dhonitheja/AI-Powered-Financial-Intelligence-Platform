@@ -1,70 +1,63 @@
 package com.wealthix.controller;
 
-import com.wealthix.service.AIClientService;
+import com.wealthix.ai.model.dto.JassHybridResponseDTO;
+import com.wealthix.ai.model.dto.AITransactionDTO;
+import com.wealthix.autopay.service.WealthixAiClient;
 import com.wealthix.plaid.service.PlaidService;
-import com.wealthix.dto.FinancialSummaryDTO;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
-import reactor.core.publisher.Mono;
 
-import java.util.Map;
+import java.util.List;
+import java.util.UUID;
 
+/**
+ * Controller for the Jass AI Assistant.
+ * Handles financial analysis requests and triggers the Hybrid AI Router.
+ */
 @RestController
 @RequestMapping("/api/assistant")
+@CrossOrigin(origins = "*") // Update with your specific React frontend URL for production
 public class AssistantController {
 
-    private final AIClientService aiClientService;
+    private final WealthixAiClient aiClient;
     private final PlaidService plaidService;
 
-    public AssistantController(AIClientService aiClientService, PlaidService plaidService) {
-        this.aiClientService = aiClientService;
+    @Autowired
+    public AssistantController(WealthixAiClient aiClient, PlaidService plaidService) {
+        this.aiClient = aiClient;
         this.plaidService = plaidService;
     }
 
-    public static class ChatRequest {
-        private String message;
-
-        public String getMessage() {
-            return message;
+    /**
+     * Endpoint for the Jass Chat Assistant.
+     * Takes a user query and returns a Hybrid AI response (Flash + Claude).
+     */
+    @PostMapping("/chat")
+    public ResponseEntity<JassHybridResponseDTO> askJass(
+            @RequestParam String itemId,
+            @RequestParam(required = false) String query) {
+        
+        // 1. Fetch the 90-day transaction window from Plaid
+        List<AITransactionDTO> transactions = plaidService.getTransactionsForAI(itemId);
+        
+        // 2. Route through the Python Hybrid AI Service
+        JassHybridResponseDTO response = aiClient.getAdvancedIntelligence(transactions, query);
+        
+        // 3. Attach a tracking ID for the UI
+        if (response != null && response.getAnalysisId() == null) {
+            response.setAnalysisId(UUID.randomUUID().toString());
         }
 
-        public void setMessage(String message) {
-            this.message = message;
-        }
+        return ResponseEntity.ok(response);
     }
 
-    @PostMapping
-    public Mono<ResponseEntity<Map<String, String>>> query(@RequestBody ChatRequest request) {
-        String message = request.getMessage();
-        if (message == null || message.trim().isEmpty()) {
-            return Mono.just(ResponseEntity.badRequest().body(Map.of("error", "Please provide a message.")));
-        }
-
-        String userId = resolveUserId();
-        String context = buildFinancialContext(userId);
-
-        return aiClientService.chat(message, context)
-                .map(reply -> ResponseEntity.ok(Map.of("reply", reply)))
-                .onErrorReturn(ResponseEntity.internalServerError().body(Map.of(
-                        "reply", "I'm sorry, I encountered an error while processing your request.")));
-    }
-
-    private String buildFinancialContext(String userId) {
-        StringBuilder ctx = new StringBuilder();
-        try {
-            FinancialSummaryDTO summary = plaidService.getFinancialSummary(userId);
-            ctx.append(String.format("ACCOUNT SUMMARY:\\n  Total Assets: $%.2f\\n  Credit Utilization: %.1f%%\\n\\n",
-                    summary.getTotalAssets(), summary.getCreditUtilization()));
-        } catch (Exception e) {
-        }
-
-        return ctx.toString();
-    }
-
-    private String resolveUserId() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        return (auth != null && auth.getName() != null) ? auth.getName() : "anonymous";
+    /**
+     * Trigger a standard automated audit (Gemini Flash only).
+     */
+    @GetMapping("/audit/{itemId}")
+    public ResponseEntity<JassHybridResponseDTO> runStandardAudit(@PathVariable String itemId) {
+        List<AITransactionDTO> transactions = plaidService.getTransactionsForAI(itemId);
+        return ResponseEntity.ok(aiClient.getAdvancedIntelligence(transactions, "Run standard financial audit."));
     }
 }

@@ -1,105 +1,60 @@
 from fastapi import APIRouter, Depends
 from app.middleware.auth_middleware import verify_internal_secret
 from app.models.ai_models import ChatRequest, ChatResponse
-from app.services.gemini_service import call_gemini
-from typing import List
+from app.services.ai_service import ai_service
+from typing import List, Optional, Dict, Any
 import json
+import logging
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(
     dependencies=[Depends(verify_internal_secret)])
 
-WEALTHIX_SYSTEM_PROMPT = """
-You are Wealthix AI Assistant, an intelligent financial
-advisor embedded in the Wealthix platform.
-
-Your capabilities:
-- Answer questions about recurring payments and budgets
-- Explain financial concepts clearly
-- Suggest ways to optimize recurring expenses
-- Help users understand their payment health score
-- Provide debt payoff strategies
-
-Rules you MUST follow:
-- NEVER ask for or mention account numbers, SSN,
-  card numbers, or any sensitive identifiers
-- Only reference anonymized financial patterns
-  (amounts and categories) provided in context
-- Always recommend consulting a licensed financial
-  advisor for major decisions
-- Keep responses concise (under 200 words)
-- Be encouraging and supportive, never alarming
-- If asked about specific transactions, explain you
-  can only see anonymized summaries
-
-You are NOT a licensed financial advisor. Always
-include this disclaimer for specific investment advice.
-"""
-
-def generate_suggestions(message: str) -> List[str]:
-    message_lower = message.lower()
-    if any(w in message_lower
-           for w in ["save", "saving", "savings"]):
-        return [
-            "View my savings goals",
-            "Show spending optimization tips",
-            "Calculate my monthly surplus"
-        ]
-    if any(w in message_lower
-           for w in ["loan", "debt", "emi"]):
-        return [
-            "View debt payoff plan",
-            "Compare loan payments",
-            "Check payment health score"
-        ]
-    return [
-        "Analyze my spending",
-        "Show upcoming payments",
-        "View AI insights"
-    ]
-
 @router.post("/chat", response_model=ChatResponse)
 async def chat(request: ChatRequest):
     """
-    Wealthix AI chat endpoint.
-    Anonymized financial context only — zero PII.
+    Upgraded Jass AI chat endpoint with RAG support.
     """
-    # Build conversation history
-    history_text = "\n".join([
-        f"{msg.role.upper()}: {msg.content}"
-        for msg in request.history[-10:]  # last 10 messages
-    ])
-
-    # Anonymized financial context
-    context_text = ""
-    if request.financial_context:
-        context_text = (
-            f"\nUser's anonymized monthly obligations: "
-            f"{json.dumps(request.financial_context)}"
-        )
-
-    prompt = f"""
-{WEALTHIX_SYSTEM_PROMPT}
-{context_text}
-
-Conversation history:
-{history_text}
-
-USER: {request.message}
-
-ASSISTANT:"""
-
-    reply = await call_gemini(prompt)
-    if not reply:
-        reply = (
-            "I'm having trouble connecting right now. "
-            "Please try again in a moment."
-        )
-
-    # Generate suggested actions based on context
-    suggested = generate_suggestions(request.message)
-
+    # Combine query with history if needed, but query_assistant handles retrieval
+    query = request.message
+    user_id = request.session_id # Using session_id as a proxy for user_id in this context
+    
+    # Use the upgraded AIService with RAG
+    result = await ai_service.query_assistant(query, user_id=user_id)
+    
     return ChatResponse(
-        reply=reply.strip(),
+        reply=result["answer"],
         session_id=request.session_id,
-        suggested_actions=suggested
+        suggested_actions=result["suggestions"],
+        metrics=result.get("analysis_metrics")
     )
+
+@router.post("/ingest")
+async def ingest_data(data: Dict[str, Any]):
+    """
+    Ingest user transaction data into RAG vector store.
+    """
+    user_id = data.get("user_id")
+    transactions = data.get("transactions", [])
+    
+    if not user_id:
+        return {"status": "error", "message": "user_id is required"}
+        
+    await ai_service.ingest_user_data(user_id, transactions)
+    return {"status": "success", "message": f"Ingested {len(transactions)} transactions for RAG"}
+
+@router.post("/analyze")
+async def analyze_finances(data: Dict[str, Any]):
+    """
+    Internal endpoint for batch analysis.
+    """
+    user_id = data.get("user_id")
+    transactions = data.get("transactions", [])
+    user_query = data.get("user_query") # Extract user query if present
+    
+    if not user_id:
+        return {"status": "error", "message": "user_id is required"}
+    
+    report = await ai_service.analyze_user_finances(user_id, transactions, user_query)
+    return report
