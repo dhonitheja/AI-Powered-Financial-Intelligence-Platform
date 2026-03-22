@@ -46,7 +46,7 @@ class StripePaymentServiceTest {
 
     @Test
     void createOrGetCustomer_returnsExisting_whenFound() throws Exception {
-        when(userRepo.findById(userId.toString())).thenReturn(Optional.of(user));
+        when(userRepo.findById(userId)).thenReturn(Optional.of(user));
 
         // User already has a stripe customer ID — should return it without calling Stripe
         String customerId = stripePaymentService.createOrGetCustomer(
@@ -58,7 +58,7 @@ class StripePaymentServiceTest {
     @Test
     void createOrGetCustomer_createsNew_whenNotFound() {
         user.setStripeCustomerId(null);
-        when(userRepo.findById(userId.toString())).thenReturn(Optional.of(user));
+        when(userRepo.findById(userId)).thenReturn(Optional.of(user));
 
         // No existing customer ID — will attempt Stripe API call (which throws in unit test)
         // Key assertion: it does NOT return the old null value
@@ -78,7 +78,7 @@ class StripePaymentServiceTest {
     @Test
     void executeAutoPayment_blocks_whenAlreadyPaidThisCycle() {
         AutoPaySchedule schedule = buildSchedule();
-        when(userRepo.findById(userId.toString())).thenReturn(Optional.of(user));
+        when(userRepo.findById(userId)).thenReturn(Optional.of(user));
         when(scheduleRepo.findByIdAndUserId(schedule.getId(), userId))
                 .thenReturn(Optional.of(schedule));
         when(balanceGuardService.hasSufficientBalance(any(), any())).thenReturn(true);
@@ -101,7 +101,7 @@ class StripePaymentServiceTest {
     void listPaymentMethods_returnsMaskedOnly() throws Exception {
         // With no stripe customer, listPaymentMethods should return empty (not throw)
         user.setStripeCustomerId(null);
-        when(userRepo.findById(userId.toString())).thenReturn(Optional.of(user));
+        when(userRepo.findById(userId)).thenReturn(Optional.of(user));
 
         var methods = stripePaymentService.listPaymentMethods(userId.toString());
         assertThat(methods).isNotNull();
@@ -116,7 +116,7 @@ class StripePaymentServiceTest {
     @Test
     void detachPaymentMethod_throwsNotFound_forUnknownUser() {
         // Guard fires before Stripe API call when user doesn't exist
-        when(userRepo.findById(userId.toString())).thenReturn(Optional.empty());
+        when(userRepo.findById(userId)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() ->
                 stripePaymentService.detachPaymentMethod(userId.toString(), "pm_any"))

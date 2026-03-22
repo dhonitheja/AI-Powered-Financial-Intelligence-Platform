@@ -40,8 +40,9 @@ from app.config.settings import settings
 async def lifespan(app: FastAPI):
     try:
         # Initialize Vertex AI for both Gemini and Claude models
-        vertexai.init(project="wealthix-pro", location="us-central1")
-        logging.info("Vertex AI initialized successfully (project=wealthix-pro)")
+        project_id = os.getenv("GOOGLE_CLOUD_PROJECT", "wealthix-pro")
+        vertexai.init(project=project_id, location="us-central1")
+        logging.info(f"Vertex AI initialized successfully (project={project_id})")
     except Exception as e:
         logging.error(f"Vertex AI initialization failed: {str(e)}")
     yield

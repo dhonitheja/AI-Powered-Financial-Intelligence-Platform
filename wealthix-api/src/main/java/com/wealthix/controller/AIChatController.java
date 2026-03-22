@@ -146,6 +146,9 @@ public class AIChatController {
     // ── Resolve authenticated user from SecurityContext ────────────────────────
     private String resolveUserId() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        return (auth != null && auth.getName() != null) ? auth.getName() : "anonymous";
+        if (auth == null || !auth.isAuthenticated() || "anonymousUser".equals(auth.getName())) {
+            throw new org.springframework.security.access.AccessDeniedException("Authentication required");
+        }
+        return auth.getName();
     }
 }

@@ -14,6 +14,7 @@ services:
       - DATABASE_URL=${DATABASE_URL}
       - DATABASE_USERNAME=${DATABASE_USERNAME}
       - DATABASE_PASSWORD=${DATABASE_PASSWORD}
+      - DATABASE_DRIVER=${DATABASE_DRIVER:-org.postgresql.Driver}
       - JWT_SECRET=${JWT_SECRET}
       - ENCRYPTION_KEY=${ENCRYPTION_KEY}
       - PLAID_CLIENT_ID=${PLAID_CLIENT_ID}
@@ -24,6 +25,8 @@ services:
       - STRIPE_PUBLISHABLE_KEY=${STRIPE_PUBLISHABLE_KEY}
       - INTERNAL_AI_SERVICE_SECRET=${INTERNAL_AI_SERVICE_SECRET}
       - AI_SERVICE_URL=http://wealthix-ai:8000
+      - GMAIL_USERNAME=${GMAIL_USERNAME}
+      - GMAIL_PASSWORD=${GMAIL_PASSWORD}
     depends_on:
       wealthix-ai:
         condition: service_healthy
@@ -64,6 +67,7 @@ services:
     environment:
       - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
       - NEXT_PUBLIC_PLAID_ENV=${PLAID_ENV}
+      - BACKEND_URL=http://wealthix-api:8080
     depends_on:
       wealthix-api:
         condition: service_healthy

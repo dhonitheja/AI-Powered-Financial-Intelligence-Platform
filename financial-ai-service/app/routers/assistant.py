@@ -27,7 +27,7 @@ async def chat(request: ChatRequest):
         reply=result["answer"],
         session_id=request.session_id,
         suggested_actions=result["suggestions"],
-        metrics=result.get("analysis_metrics")
+        metrics=result.get("analysis_metrics", {})  # Default to empty dict, never None
     )
 
 @router.post("/ingest")
@@ -56,5 +56,6 @@ async def analyze_finances(data: Dict[str, Any]):
     if not user_id:
         return {"status": "error", "message": "user_id is required"}
     
-    report = await ai_service.analyze_user_finances(user_id, transactions, user_query)
+    # analyze_finances is sync — call directly (no await)
+    report = ai_service.analyze_finances(user_id, transactions, user_query)
     return report

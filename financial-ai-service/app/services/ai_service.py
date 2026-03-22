@@ -13,7 +13,7 @@ logger = logging.getLogger("wealthix-ai")
 
 # Jass 2.0 Persona Constants
 JASS_SYSTEM_INSTRUCTION = """
-You are Jass 2.0, a Quantum-Level Financial Intelligence Engine. 
+You are Jass 2.0, a Quantum-Level Financial Intelligence Engine.
 Your analysis architecture combines Big Four auditing precision with VC strategic foresight.
 Focus on: Ghost Subscription detection, Spending Velocity, and Tax Strategy.
 """
@@ -33,9 +33,11 @@ class AIService:
             logger.error(f"Failed to parse AI JSON: {e}")
             return {"error": "Parsing error"}
 
-    async def analyze_finances(self, user_id: str, transactions: List[Dict[str, Any]], user_query: Optional[str] = None):
+    # Synchronous — Vertex AI SDK calls are blocking; wrapping them as async
+    # without awaiting blocks the event loop. Use run_in_executor if async is needed.
+    def analyze_finances(self, user_id: str, transactions: List[Dict[str, Any]], user_query: Optional[str] = None):
         flash_model = GenerativeModel("gemini-1.5-flash")
-        
+
         user_prompt = f"""
         USER_ID: {user_id}
         USER_QUERY: "{user_query if user_query else 'Monitor my financial health'}"
@@ -64,15 +66,15 @@ class AIService:
             logger.info(f"Quantum Router: Triage pass for user={user_id}")
             triage_prompt = f"Analyze this request complexity (1-10). User query: '{user_query}'. Transactions count: {len(transactions)}. Respond with ONLY an integer."
             triage_res = flash_model.generate_content(triage_prompt)
-            
+
             try:
                 complexity_score = int(triage_res.text.strip())
-            except:
-                complexity_score = 5 # Default
-            
+            except Exception:
+                complexity_score = 5  # Default
+
             # Escalation Rule: Score > 7 OR expert keywords
             should_escalate = complexity_score > 7 or (user_query and any(kw in user_query.lower() for kw in ["tax", "invest", "strategy", "legal"]))
-            
+
             model_name = "Gemini 1.5 Flash"
             if should_escalate:
                 model_name = "Claude 3.5 Sonnet"
@@ -84,27 +86,32 @@ class AIService:
                 JASS_SYSTEM_INSTRUCTION + "\n\n" + user_prompt,
                 generation_config=GenerationConfig(response_mime_type="application/json")
             )
-            
+
             result = self._extract_json(flash_response.text)
             result["complexity_score"] = complexity_score
             result["model_used"] = "Gemini 1.5 Flash"
-            
+
             # STEP 3: Route to Claude 3.5 Sonnet if escalated
             if should_escalate:
                 client = AnthropicVertex(region=self.location, project_id=self.project_id)
-                
+
+                # Sanitize user_query before interpolating into prompt
+                safe_query = (user_query or "Provide deep investment strategy overview.")[:500]
+
                 claude_prompt = f"""
-                You are Jass 2.0 (Deep Strategy Mode). 
+                You are Jass 2.0 (Deep Strategy Mode).
                 Based on this Audit: {json.dumps(result)}
-                Answer the user's strategic question: {user_query if user_query else 'Provide deep investment strategy overview.'}
+                <user_question>
+                {safe_query}
+                </user_question>
                 """
-                
+
                 claude_response = client.messages.create(
                     model="claude-3-5-sonnet@20240620",
                     max_tokens=1024,
                     messages=[{"role": "user", "content": claude_prompt}]
                 )
-                
+
                 result["expert_advice"] = claude_response.content[0].text
                 result["requires_expert_followup"] = True
                 result["model_used"] = "Claude 3.5 Sonnet"
@@ -132,7 +139,7 @@ class AIService:
             from google.cloud import logging as cloud_logging
             client = cloud_logging.Client()
             logger_cloud = client.logger("wealthix_ai_analytics")
-            
+
             logger_cloud.log_struct({
                 "analysis_id": result.get("analysis_id"),
                 "model_used": result.get("model_used"),
@@ -151,7 +158,8 @@ class AIService:
     async def query_assistant(self, query: str, user_id: str) -> Dict[str, Any]:
         return {
             "answer": f"I see your query about {query}. I'm analyzing your historical patterns across Vertex AI engines.",
-            "suggestions": ["Check my tax opportunities", "Calculate my burn rate"]
+            "suggestions": ["Check my tax opportunities", "Calculate my burn rate"],
+            "analysis_metrics": {}  # Required by ChatResponse model
         }
 
 ai_service = AIService()

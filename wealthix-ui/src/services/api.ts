@@ -119,7 +119,7 @@ export const transactionService = {
         return api.get('/summary', { params: p });
     },
     triggerAnalysis: (id: string) => api.post(`/transactions/${id}/analyze`),
-    askAssistant: (query: string) => api.post('/assistant', { message: query }),
+    askAssistant: (itemId: string, query: string) => api.post('/assistant/chat', null, { params: { itemId, query } }),
 };
 
 
@@ -192,7 +192,7 @@ export const chatService = {
      * Sends a chat message. userId is resolved server-side from JWT.
      */
     sendMessage: (data: { sessionId: string; message: string }) =>
-        api.post('/v1/ai/chat', data),
+        api.post('/ai/chat', data),
 
     getAnomalies: () => api.get('/v1/ai/anomalies'),
     acknowledgeAnomaly: (id: string) => api.post(`/v1/ai/anomalies/${id}/acknowledge`),

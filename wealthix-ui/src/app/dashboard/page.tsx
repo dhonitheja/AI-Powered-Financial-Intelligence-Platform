@@ -10,7 +10,7 @@ import {
 } from 'recharts';
 import {
     Brain, ShieldAlert, TrendingDown, Wallet,
-    ArrowUpRight, ArrowDownRight, RefreshCw, Loader2, CalendarDays, Zap
+    ArrowUpRight, ArrowDownRight, RefreshCw, Loader2, CalendarDays
 } from 'lucide-react';
 import AddTransactionModal from '@/components/shared/AddTransactionModal';
 import AIDrawer from '@/components/shared/AIDrawer';
@@ -631,9 +631,15 @@ function WealthTipCard() {
     if (loading) return <div className="h-24 bg-white/5 rounded-2xl animate-pulse" />;
     if (!insight) return null;
 
-    const velocityColor = 
-        insight.spendingVelocity === 'accelerating' ? 'text-rose-400' :
-        insight.spendingVelocity === 'decelerating' ? 'text-emerald-400' :
+    // spendingVelocity is stored as a stringified float (e.g. "0.75") from the backend.
+    // Positive = accelerating (spending up), negative = decelerating.
+    const velocityNum = parseFloat(insight.spendingVelocity ?? '0');
+    const velocityLabel = isNaN(velocityNum)
+        ? insight.spendingVelocity   // legacy string label passthrough
+        : velocityNum > 0.05 ? 'accelerating' : velocityNum < -0.05 ? 'decelerating' : 'stable';
+    const velocityColor =
+        velocityLabel === 'accelerating' ? 'text-rose-400' :
+        velocityLabel === 'decelerating' ? 'text-emerald-400' :
         'text-slate-400';
 
     return (
@@ -656,7 +662,7 @@ function WealthTipCard() {
                     <div className="flex gap-4 border-l border-white/5 md:pl-6">
                         <div className="space-y-1">
                             <p className="text-[10px] font-black uppercase text-slate-500 tracking-widest">Velocity</p>
-                            <p className={cn("text-xs font-bold uppercase", velocityColor)}>{insight.spendingVelocity}</p>
+                            <p className={cn("text-xs font-bold uppercase", velocityColor)}>{velocityLabel}</p>
                         </div>
                         <div className="space-y-1">
                             <p className="text-[10px] font-black uppercase text-slate-500 tracking-widest">Health</p>

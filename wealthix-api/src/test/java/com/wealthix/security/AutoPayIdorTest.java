@@ -1,6 +1,6 @@
 package com.wealthix.security;
 
-import com.wealthix.autopay.controller.AutoPayController;
+import com.wealthix.controller.AutoPayController;
 import com.wealthix.autopay.service.AutoPayService;
 import com.wealthix.autopay.service.PlaidVerificationService;
 import com.wealthix.autopay.service.RecurringPaymentDetectionService;

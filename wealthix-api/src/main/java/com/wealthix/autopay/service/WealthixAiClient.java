@@ -25,7 +25,7 @@ public class WealthixAiClient {
     @Value("${wealthix.ai.service.url:http://localhost:8000}")
     private String aiServiceUrl;
 
-    @Value("${wealthix.ai.service.secret:}")
+    @Value("${wealthix.ai.service.secret}")
     private String internalSecret;
 
     private final RestTemplate restTemplate;

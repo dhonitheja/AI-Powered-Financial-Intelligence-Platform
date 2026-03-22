@@ -24,7 +24,7 @@ jwt:
   cookieName: ai_finance_jwt
 
 openai:
-  api-key: ${OPENAI_API_KEY}
+  api-key: ${OPENAI_API_KEY:}
   model: gpt-4o-mini
   base-url: https://api.openai.com/v1
   max-tokens: 800
@@ -33,8 +33,6 @@ openai:
 spring:
   application:
     name: wealthix-api
-
-
 
   mail:
     host: smtp.gmail.com
@@ -49,17 +47,36 @@ spring:
             enable: true
 
   datasource:
-    url: jdbc:h2:mem:financialdb;DB_CLOSE_DELAY=-1
-    driverClassName: org.h2.Driver
-    username: sa
-    password: 
+    url: ${DATABASE_URL:jdbc:h2:mem:financialdb;DB_CLOSE_DELAY=-1}
+    driverClassName: ${DATABASE_DRIVER:org.h2.Driver}
+    username: ${DATABASE_USERNAME:sa}
+    password: ${DATABASE_PASSWORD:}
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      idle-timeout: 300000
+      connection-timeout: 30000
+      pool-name: WealthixPool
+      data-source-properties:
+        ssl: true
+        sslmode: require
 
   jpa:
     hibernate:
-      ddl-auto: update   # Allow Hibernate to manage schema in H2 for local dev
+      ddl-auto: update
+    open-in-view: false
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.H2Dialect
+        jdbc:
+          batch_size: 20
+        order_inserts: true
+        order_updates: true
+        generate_statistics: false
+
+  cache:
+    type: caffeine
+    caffeine:
+      spec: maximumSize=500,expireAfterWrite=5m
 
 server:
   port: 8080
@@ -85,9 +102,7 @@ autopay:
   reminder:
     cron: ${AUTOPAY_REMINDER_CRON:0 0 8 * * ?}
   plaid-verification:
-    # Cron: nightly at 2 AM — scan execution logs for Plaid verification
     cron: ${AUTOPAY_VERIFICATION_CRON:0 0 2 * * ?}
-    # Days after execution before flagging as NEEDS_REVIEW if unverified
     review-threshold-days: 5
 
 # ── Stripe ────────────────────────────────────────────────────────────────────
@@ -143,27 +158,3 @@ info:
     name: Wealthix API
     version: "@project.version@"
     description: AI-Powered Financial Intelligence Platform
-
-# ── Performance ──────────────────────────────────────────────────────────────
-  datasource:
-    hikari:
-      maximum-pool-size: 10
-      minimum-idle: 5
-      idle-timeout: 300000
-      connection-timeout: 30000
-      pool-name: WealthixPool
-
-  jpa:
-    open-in-view: false
-    properties:
-      hibernate:
-        jdbc:
-          batch_size: 20
-        order_inserts: true
-        order_updates: true
-        generate_statistics: false
-
-  cache:
-    type: caffeine
-    caffeine:
-      spec: maximumSize=500,expireAfterWrite=5m

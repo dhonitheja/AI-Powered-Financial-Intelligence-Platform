@@ -188,6 +188,11 @@ public class PlaidService {
             "Failed to fetch accounts");
       }
 
+      // Fetch institution info once (not per-account) — avoids repeated Plaid API calls
+      String[] institutionInfo = getInstitutionInfo(plaintextToken);
+      String resolvedInstitutionId = institutionInfo[0];
+      String resolvedInstitutionName = institutionInfo[1];
+
       List<UserBankConnection> connections = new ArrayList<>();
 
       for (AccountBase account :
@@ -206,8 +211,8 @@ public class PlaidService {
                   .itemId(itemId)
                   .plaidAccountId(account.getAccountId())
                   .encryptedAccessToken(encryptedToken)
-                  .institutionName(
-                      getInstitutionName(plaintextToken))
+                  .institutionId(resolvedInstitutionId)
+                  .institutionName(resolvedInstitutionName)
                   .accountName(account.getName())
                   .accountOfficialName(
                       account.getOfficialName())
@@ -223,6 +228,12 @@ public class PlaidService {
 
           connections.add(connectionRepo.save(connection));
         }
+      }
+
+      // If all accounts already existed (re-link scenario), return existing ones
+      if (connections.isEmpty()) {
+        log.info("[Wealthix] Re-link detected for user {} — returning existing connections for itemId={}", userId, itemId);
+        return connectionRepo.findByItemId(itemId);
       }
 
       return connections;
@@ -347,18 +358,27 @@ public class PlaidService {
           try {
               WealthInsight insight = new WealthInsight();
               insight.setUserId(UUID.fromString(userId));
-              insight.setWealthTip(report.getStandardReport()); // Use standardReport field
-              insight.setAnalysisId(UUID.fromString(report.getAnalysisId()));
-              
+              // Null-guard: standardReport may be absent in fallback responses
+              insight.setWealthTip(report.getStandardReport() != null ? report.getStandardReport() : "Analysis pending");
+              // Null-guard: analysisId may be absent; generate one if missing
+              String analysisIdStr = report.getAnalysisId() != null ? report.getAnalysisId() : UUID.randomUUID().toString();
+              insight.setAnalysisId(UUID.fromString(analysisIdStr));
+
               // Jass 2.0 fields
-              insight.setFinancialHealthScore(report.getHealthScore());
-              // For Legacy compatibility or future expansion, we can map spending_velocity
-              // but for now focusing on the health score and ghost count
+              insight.setFinancialHealthScore(report.getHealthScore() != null ? report.getHealthScore() : 0);
               insight.setGhostSubscriptions(report.getGhostSubscriptions() != null ? report.getGhostSubscriptions().size() : 0);
-              
+              // spendingVelocity: DTO is Double, entity is String — convert
+              insight.setSpendingVelocity(report.getSpendingVelocity() != null ? String.valueOf(report.getSpendingVelocity()) : null);
+              // expertAdvice from Claude escalation (may be null for Gemini-only responses)
+              insight.setExpertAdvice(report.getExpertAdvice());
+              // Tax deductible estimate from tax_strategy map
+              if (report.getTaxStrategy() != null && report.getTaxStrategy().get("deductible_estimate") instanceof Number n) {
+                  insight.setTaxDeductibleEstimate(n.doubleValue());
+              }
+
               // Record which model was used and the confidence score for transparency
               insight.setModelUsed(report.getModelUsed());
-              insight.setRouterConfidenceScore(report.getComplexityScore());
+              insight.setRouterConfidenceScore(report.getComplexityScore() != null ? report.getComplexityScore() : 0);
 
               insightRepo.save(insight);
               log.info("[Wealthix] New financial insight stored (analysisId={}) for user={}", 
@@ -393,10 +413,10 @@ public class PlaidService {
   }
 
   /**
-   * STEP 5: Get Institution Name
-   * Looks up institution details by access token
+   * STEP 5: Get Institution Info
+   * Returns [institutionId, institutionName] for the connected item.
    */
-  private String getInstitutionName(String accessToken) {
+  private String[] getInstitutionInfo(String accessToken) {
     try {
       ItemGetRequest itemRequest =
           new ItemGetRequest().accessToken(accessToken);
@@ -405,7 +425,7 @@ public class PlaidService {
 
       if (!itemResponse.isSuccessful()
           || itemResponse.body() == null) {
-        return "Unknown Institution";
+        return new String[]{"unknown", "Unknown Institution"};
       }
 
       String institutionId =
@@ -423,14 +443,13 @@ public class PlaidService {
 
       if (!instResponse.isSuccessful()
           || instResponse.body() == null) {
-        return institutionId;
+        return new String[]{institutionId, institutionId};
       }
 
-      return instResponse.body()
-          .getInstitution().getName();
+      return new String[]{institutionId, instResponse.body().getInstitution().getName()};
 
     } catch (IOException e) {
-      return "Connected Bank";
+      return new String[]{"unknown", "Connected Bank"};
     }
   }
 

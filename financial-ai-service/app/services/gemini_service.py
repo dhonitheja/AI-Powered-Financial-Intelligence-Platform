@@ -53,7 +53,7 @@ async def categorize_payment(description: str) -> dict:
         )
         return json.loads(response.text)
     except Exception as e:
-        logger.warn(f"Categorization failed: {e}")
+        logger.warning(f"Categorization failed: {e}")
         return {"category": "CUSTOM", "confidence": 0.5}
 
 async def generate_insights(schedules_summary: str) -> dict:
@@ -83,7 +83,7 @@ async def generate_insights(schedules_summary: str) -> dict:
         )
         return json.loads(response.text)
     except Exception as e:
-        logger.warn(f"Insights failed: {e}")
+        logger.warning(f"Insights failed: {e}")
         return {
             "optimization_tips": [],
             "risk_flags": [],

@@ -70,7 +70,7 @@ public class BudgetEnforcementService {
             LocalDate now = LocalDate.now();
 
             List<CategorySpendingDTO> spending =
-                    transactionRepository.calculateSpendingByCategoryBetween(periodStart, now);
+                    transactionRepository.calculateSpendingByCategoryBetween(budget.getUserId(), periodStart, now);
 
             double currentSpend = spending.stream()
                     .filter(s -> budget.getCategory().equalsIgnoreCase(s.getCategory()))

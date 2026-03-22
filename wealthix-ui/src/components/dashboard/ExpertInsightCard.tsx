@@ -12,8 +12,9 @@ interface ExpertInsightCardProps {
 }
 
 export const ExpertInsightCard: React.FC<ExpertInsightCardProps> = ({ insight }) => {
-    // Generate accuracy based on complexity (e.g., score/10 with small random jitter for "realism")
-    const accuracy = ((insight.complexityScore || 8) + (Math.random() * 0.5)).toFixed(1);
+    // complexityScore is 1-10 from backend. Clamp to [1,9] then add jitter so display is always X.X/10
+    const baseScore = Math.min(Math.max(insight.complexityScore || 8, 1), 9);
+    const accuracy = (baseScore + Math.random() * 0.5).toFixed(1);
 
     return (
         <Card className="border-[#D4AF37]/50 bg-gradient-to-br from-[#1A1635] to-[#2D2412]/20 shadow-gold relative overflow-hidden group border-2 animate-in slide-in-from-right-4 duration-1000">
