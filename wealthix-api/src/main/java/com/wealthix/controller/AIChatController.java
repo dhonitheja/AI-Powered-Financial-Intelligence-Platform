@@ -149,6 +149,10 @@ public class AIChatController {
         if (auth == null || !auth.isAuthenticated() || "anonymousUser".equals(auth.getName())) {
             throw new org.springframework.security.access.AccessDeniedException("Authentication required");
         }
+        Object principal = auth.getPrincipal();
+        if (principal instanceof com.wealthix.security.UserDetailsImpl) {
+            return ((com.wealthix.security.UserDetailsImpl) principal).getId();
+        }
         return auth.getName();
     }
 }

@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Request
 from contextlib import asynccontextmanager
-import vertexai
+# import vertexai
 import os
 import uvicorn
 import logging
@@ -9,13 +9,14 @@ import sys
 from datetime import datetime
 
 from app.routers import (
-    autopay_insights, 
-    transaction_enrichment, 
+    autopay_insights,
+    transaction_enrichment,
     financial_advice,
     assistant,
     anomaly_detection,
     spending_forecast,
-    budget_recommendations
+    budget_recommendations,
+    openai_compat
 )
 
 class WealthixJsonFormatter(logging.Formatter):
@@ -41,7 +42,7 @@ async def lifespan(app: FastAPI):
     try:
         # Initialize Vertex AI for both Gemini and Claude models
         project_id = os.getenv("GOOGLE_CLOUD_PROJECT", "wealthix-pro")
-        vertexai.init(project=project_id, location="us-central1")
+        # vertexai.init(project=project_id, location="us-central1")
         logging.info(f"Vertex AI initialized successfully (project={project_id})")
     except Exception as e:
         logging.error(f"Vertex AI initialization failed: {str(e)}")
@@ -79,6 +80,8 @@ app.include_router(assistant.router, prefix="/assistant")
 app.include_router(anomaly_detection.router, prefix="/anomaly")
 app.include_router(spending_forecast.router, prefix="/forecast")
 app.include_router(budget_recommendations.router, prefix="/budget")
+
+app.include_router(openai_compat.router, prefix="/openai")
 
 @app.get("/health")
 async def health():

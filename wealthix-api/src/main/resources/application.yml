@@ -24,9 +24,9 @@ jwt:
   cookieName: ai_finance_jwt
 
 openai:
-  api-key: ${OPENAI_API_KEY:}
-  model: gpt-4o-mini
-  base-url: https://api.openai.com/v1
+  api-key: ${INTERNAL_AI_SERVICE_SECRET:dev_internal_secret_key_123}
+  model: gemini-2.5-flash
+  base-url: ${AI_SERVICE_URL:http://localhost:8000}/openai
   max-tokens: 800
   temperature: 0.3
 
@@ -57,14 +57,13 @@ spring:
       idle-timeout: 300000
       connection-timeout: 30000
       pool-name: WealthixPool
-      data-source-properties:
-        ssl: true
-        sslmode: require
+      connection-init-sql: "SELECT 1"
 
   jpa:
     hibernate:
       ddl-auto: update
     open-in-view: false
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
     properties:
       hibernate:
         jdbc:

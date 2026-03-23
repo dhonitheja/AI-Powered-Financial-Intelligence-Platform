@@ -3,6 +3,7 @@ package com.wealthix.entity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -11,7 +12,9 @@ import lombok.NoArgsConstructor;
 import java.util.UUID;
 
 @Entity
-@Table(name = "user_bank_connections")
+@Table(name = "user_bank_connections", uniqueConstraints = {
+    @UniqueConstraint(columnNames = {"item_id", "plaid_account_id"})
+})
 @Data
 @Builder
 @NoArgsConstructor
@@ -31,7 +34,7 @@ public class UserBankConnection extends BaseEntity {
     @Column(name = "access_token", nullable = false)
     private String encryptedAccessToken;
 
-    @Column(unique = true)
+    @Column(name = "item_id")
     private String itemId;
 
     @Builder.Default

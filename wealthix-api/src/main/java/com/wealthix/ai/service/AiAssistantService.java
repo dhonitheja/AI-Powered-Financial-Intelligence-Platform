@@ -65,6 +65,7 @@ public class AiAssistantService {
         this.gamificationService = gamificationService;
     }
 
+    @io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker(name = "ai-chat", fallbackMethod = "chatFallback")
     public ChatResponseDto chat(ChatMessageDto req, String username) {
         AppUser user = userRepository.findFirstByEmailIgnoreCase(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -131,6 +132,18 @@ public class AiAssistantService {
         }
 
         return responseDto;
+    }
+
+    /**
+     * Fallback for AI Chat circuit breaker.
+     */
+    public ChatResponseDto chatFallback(ChatMessageDto req, String username, Throwable t) {
+        log.warn("[AI] Circuit breaker fallback triggered for user {}: {}", username, t.getMessage());
+        return new ChatResponseDto(
+                "The AI assistant is temporarily offline. We're working to restore the connection. In the meantime, you can review your recent spending reports.",
+                req.getSessionId(),
+                List.of()
+        );
     }
 
     public Object getSpendingForecast(String username) {

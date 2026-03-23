@@ -12,7 +12,7 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
-
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 
@@ -143,14 +143,15 @@ public class AIClientService {
                 .bodyValue(body)
                 .retrieve()
                 .bodyToMono(JsonNode.class)
+                .timeout(Duration.ofSeconds(30))
                 .map(json -> {
                     try {
                         return json.at("/choices/0/message/content").asText("");
                     } catch (Exception e) {
-                        throw new RuntimeException("Unexpected OpenAI response shape: " + json);
+                        throw new RuntimeException("Unexpected AI response shape: " + json);
                     }
                 })
-                .doOnError(e -> log.error("[AI] OpenAI call failed: {}", e.getMessage()));
+                .doOnError(e -> log.error("[AI] AI call failed: {}", e.getMessage()));
     }
 
     // ─── Response Parsing ──────────────────────────────────────────────────────

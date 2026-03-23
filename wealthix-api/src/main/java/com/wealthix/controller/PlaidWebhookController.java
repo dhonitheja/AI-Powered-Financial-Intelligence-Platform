@@ -1,5 +1,6 @@
 package com.wealthix.controller;
 
+import com.wealthix.filter.RawBodyCachingFilter;
 import com.wealthix.service.PlaidWebhookService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
@@ -44,10 +45,11 @@ public class PlaidWebhookController {
             @RequestBody Map<String, Object> payload) {
 
         // ── Read raw body for signature verification ───────────────────────────
-        // Note: Spring has already read the body into `payload`, so we
-        // re-serialize it for the HMAC check. For strict production use,
-        // configure a RawBodyCachingFilter (see comment below).
-        String rawBody = buildRawBody(payload);
+        // RawBodyCachingFilter caches the exact bytes Plaid sent before Spring
+        // parses JSON — this is the only way to guarantee HMAC accuracy.
+        String rawBody = (request instanceof RawBodyCachingFilter.CachedBodyHttpServletRequest cached)
+                ? cached.getRawBody()
+                : buildRawBody(payload); // fallback (should not happen in production)
         String signature = request.getHeader(PLAID_SIGNATURE_HEADER);
 
         // ── Signature gate ─────────────────────────────────────────────────────

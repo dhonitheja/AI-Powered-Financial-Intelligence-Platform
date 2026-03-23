@@ -244,62 +244,66 @@ public class PlaidService {
     }
   }
 
-  /**
-   * STEP 4: Sync Transactions
-   * Fetches transactions for all user connections
-   * Uses idempotency to prevent duplicates
-   */
-  public void syncTransactions(
-      String userId, String encryptedToken) {
-    try {
-      // Decrypt in memory only — never log
-      String accessToken =
-          encryptionService.decrypt(encryptedToken);
+    /**
+     * STEP 4: Sync Transactions
+     * Fetches transactions for all user connections
+     * Uses idempotency to prevent duplicates
+     */
+    public void syncTransactions(
+            String userId, String encryptedToken) {
+        try {
+            // Decrypt in memory only — never log
+            String accessToken = encryptionService.decrypt(encryptedToken);
 
-      // Date range: last 180 days for deeper historical analysis
-      LocalDate startDate =
-          LocalDate.now().minusDays(180);
-      LocalDate endDate = LocalDate.now();
+            // ── Mock Mode for Dev/QA ──────────────────────────────────────────
+            if (accessToken.startsWith("mock_")) {
+                log.info("[Wealthix Mock] Simulating Plaid sync for mock token...");
+                generateMockTransactions(userId, accessToken);
+                return;
+            }
 
-      // Paginate: Plaid defaults to 100 per page; loop until all fetched
-      List<com.plaid.client.model.Transaction> plaidTxs = new ArrayList<>();
-      List<AccountBase> plaidAccounts = null;
-      int offset = 0;
-      int totalTransactions = Integer.MAX_VALUE;
+            // Date range: last 180 days for deeper historical analysis
+            LocalDate startDate = LocalDate.now().minusDays(180);
+            LocalDate endDate = LocalDate.now();
 
-      while (plaidTxs.size() < totalTransactions) {
-        TransactionsGetRequest txRequest =
-            new TransactionsGetRequest()
-                .accessToken(accessToken)
-                .startDate(startDate)
-                .endDate(endDate)
-                .options(new TransactionsGetRequestOptions()
-                    .count(500)
-                    .offset(offset));
+            // Paginate: Plaid defaults to 100 per page; loop until all fetched
+            List<com.plaid.client.model.Transaction> plaidTxs = new ArrayList<>();
+            List<AccountBase> plaidAccounts = null;
+            int offset = 0;
+            int totalTransactions = Integer.MAX_VALUE;
 
-        Response<TransactionsGetResponse> txResponse =
-            plaidApi.transactionsGet(txRequest).execute();
+            while (plaidTxs.size() < totalTransactions) {
+                TransactionsGetRequest txRequest = new TransactionsGetRequest()
+                        .accessToken(accessToken)
+                        .startDate(startDate)
+                        .endDate(endDate)
+                        .options(new TransactionsGetRequestOptions()
+                                .count(500)
+                                .offset(offset));
 
-        if (!txResponse.isSuccessful() || txResponse.body() == null) {
-          log.warn("[Wealthix] Transaction sync failed at offset {}: {}", offset, txResponse.code());
-          break;
-        }
+                Response<TransactionsGetResponse> txResponse = plaidApi.transactionsGet(txRequest).execute();
 
-        if (plaidAccounts == null) {
-          plaidAccounts = txResponse.body().getAccounts();
-          totalTransactions = txResponse.body().getTotalTransactions();
-        }
+                if (!txResponse.isSuccessful() || txResponse.body() == null) {
+                    log.warn("[Wealthix] Transaction sync failed at offset {}: {}", offset, txResponse.code());
+                    break;
+                }
 
-        List<com.plaid.client.model.Transaction> page = txResponse.body().getTransactions();
-        if (page.isEmpty()) break;
-        plaidTxs.addAll(page);
-        offset += page.size();
-      }
+                if (plaidAccounts == null) {
+                    plaidAccounts = txResponse.body().getAccounts();
+                    totalTransactions = txResponse.body().getTotalTransactions();
+                }
 
-      if (plaidAccounts == null) {
-        log.warn("[Wealthix] Transaction sync returned no data for user {}", userId);
-        return;
-      }
+                List<com.plaid.client.model.Transaction> page = txResponse.body().getTransactions();
+                if (page.isEmpty())
+                    break;
+                plaidTxs.addAll(page);
+                offset += page.size();
+            }
+
+            if (plaidAccounts == null) {
+                log.warn("[Wealthix] Transaction sync returned no data for user {}", userId);
+                return;
+            }
 
       // Update balances for all accounts in this item
       for (AccountBase plaidAccount : plaidAccounts) {
@@ -647,5 +651,50 @@ public class PlaidService {
             }
         }
         return aiTransactions;
+    }
+
+    private void generateMockTransactions(String userId, String accessToken) {
+        log.info("[Wealthix Mock] Generating 10 mock transactions for user {}", userId);
+        
+        List<UserBankConnection> connections = connectionRepo.findByUserId(UUID.fromString(userId));
+        if (connections.isEmpty()) return;
+        
+        String accountId = connections.get(0).getPlaidAccountId();
+        String[] descriptions = {
+            "Chase Home Mortgage", "Tesla Finance Auto Loan", "SoFi Personal Loan",
+            "Starbucks Coffee", "Amazon.com Marketplace", "Netflix Subscription",
+            "Whole Foods Market", "Shell Oil Station", "Apple App Store", "Uber Trip"
+        };
+        String[] categories = {
+            "LOAN_PAYMENTS", "LOAN_PAYMENTS", "LOAN_PAYMENTS",
+            "FOOD_AND_DRINK", "SHOPS", "SUBSCRIPTION",
+            "GROCERIES", "TRANSPORTATION", "ENTERTAINMENT", "TRANSPORTATION"
+        };
+        BigDecimal[] amounts = {
+            new BigDecimal("2850.45"), new BigDecimal("842.12"), new BigDecimal("420.00"),
+            new BigDecimal("5.45"), new BigDecimal("124.99"), new BigDecimal("15.99"),
+            new BigDecimal("84.20"), new BigDecimal("45.00"), new BigDecimal("3.99"), new BigDecimal("22.50")
+        };
+
+        int saved = 0;
+        for (int i = 0; i < descriptions.length; i++) {
+            String pseudoId = "mock_tx_" + userId.substring(0, 5) + "_" + i + "_" + System.currentTimeMillis();
+            
+            if (transactionRepo.existsByPlaidTransactionId(pseudoId)) continue;
+
+            Transaction tx = Transaction.builder()
+                .userId(UUID.fromString(userId))
+                .plaidTransactionId(pseudoId)
+                .plaidAccountId(accountId)
+                .amount(amounts[i])
+                .description(descriptions[i])
+                .category(categories[i])
+                .transactionDate(LocalDate.now().minusDays(i % 10))
+                .build();
+
+            transactionRepo.save(tx);
+            saved++;
+        }
+        log.info("[Wealthix Mock] Mock sync complete. Saved {} transactions.", saved);
     }
 }

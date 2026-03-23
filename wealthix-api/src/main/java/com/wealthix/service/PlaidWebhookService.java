@@ -17,7 +17,6 @@ import java.security.NoSuchAlgorithmException;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 /**
  * Handles incoming Plaid webhook events:
@@ -131,18 +130,13 @@ public class PlaidWebhookService {
             return;
         }
 
-        // Collect unique user IDs to avoid duplicate syncs
-        connections.stream()
-                .map(UserBankConnection::getUserId)
-                .distinct()
-                .forEach(userId -> {
-                    try {
-                        log.info("[Webhook] Triggering sync for user {} (item {})", userId, itemId);
-                        plaidService.syncTransactions(userId.toString(), null);
-                        log.info("[Webhook] Sync complete for user {} ", userId);
-                    } catch (Exception e) {
-                        log.error("[Webhook] Sync failed for user {}: {}", userId, e.getMessage());
-                    }
-                });
+        // Sync by itemId — fetches the encrypted token from DB directly.
+        try {
+            log.info("[Webhook] Triggering sync for item {}", itemId);
+            plaidService.syncByItemId(itemId);
+            log.info("[Webhook] Sync complete for item {}", itemId);
+        } catch (Exception e) {
+            log.error("[Webhook] Sync failed for item {}: {}", itemId, e.getMessage());
+        }
     }
 }

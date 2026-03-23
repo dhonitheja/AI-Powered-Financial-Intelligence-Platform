@@ -15,13 +15,20 @@ spring:
   mail:
     host: localhost
     port: 3025
+    username: test-user
+    password: test-password
 
 encryption:
-  key: dGVzdGtleXRlc3RrZXl0ZXN0a2V5dGVzdGtleQ==
+  key: MTIzNDU2Nzg5MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTI=
 
 jwt:
   secret: testSecretKeyForJwtTokenGenerationThatIsLongEnough
-  expiration: 86400000
+  expirationMs: 86400000
+  cookieName: ai_finance_jwt
+
+openai:
+  api-key: test-key
+  model: gpt-4o-mini
 
 plaid:
   client-id: test-client-id
